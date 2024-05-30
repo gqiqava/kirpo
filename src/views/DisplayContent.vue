@@ -24,7 +24,8 @@ const annotationForm = ref({
   scanner_folder_location: null
 })
 
-folders.value = getDirectoryFiles()
+//ddaamate ROute mtliani arraydan
+folders.value = getDirectoryFiles('')
 
 const isCreateModalOpened = ref(false)
 const isEditModalOpened = ref(false)

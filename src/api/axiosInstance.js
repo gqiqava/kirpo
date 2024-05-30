@@ -6,7 +6,7 @@ const commonConfig = {
 
 const requestInterceptorCallback = (config) => {
   config.headers['Content-Type'] = 'application/json'
-  config.headers.Authorization = `bearer ${localStorage.getItem('token')}`
+  config.headers.Authorization = `token ${localStorage.getItem('token')}`
   return config
 }
 

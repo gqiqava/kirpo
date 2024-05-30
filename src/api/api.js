@@ -1,7 +1,25 @@
 import AxiosInst from './axiosInstance'
 
-export const getDirectoryFiles = () => {
-  // let resp = AxiosInst.get('newapi/view-files/')
+export const login = (val) => {
+  //   let resp = AxiosInst.get('newapi/login/', val)
+
+  let resp = {
+    token: '3254f9fb9bf8e9d1e0decb4969b73458c907a46a',
+    user_id: 1,
+    role_id: null
+  }
+
+  localStorage.setItem('token', '3254f9fb9bf8e9d1e0decb4969b73458c907a46a')
+
+  return resp
+}
+
+export const getDirectoryFiles = (val) => {
+  // const body = {
+  //   directory: 'Scanners',
+  //   folder_name: val
+  // }
+  // let resp = AxiosInst.get('newapi/view-files/', body)
   let resp = [
     {
       name: 'folder 3',

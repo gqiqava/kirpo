@@ -1,20 +1,17 @@
 <script setup>
-import { RouterLink, RouterView } from 'vue-router'
+import { RouterView, useRoute } from 'vue-router'
 import RouteManager from './components/RouteManager.vue'
 
-const folders = []
+const folders = useRoute()
+
+console.log(folders.fullPath)
 </script>
 
 <template>
   <div class="landing">
     <div style="display: flex">
       <RouteManager />
-      <!-- <RouteManager /> -->
     </div>
-
-    <!-- <RouterLink to="/">Home</RouterLink>
-    <RouterLink to="/about">About</RouterLink> -->
-
     <div>
       <RouterView />
     </div>
