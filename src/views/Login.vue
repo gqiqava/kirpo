@@ -27,7 +27,7 @@ const loginUser = async () => {
     stateValid.value = false
     return
   }
-  const resposne = await login(formData)
+  const resposne = await login(formData.value)
   router.push('/content')
 }
 </script>
