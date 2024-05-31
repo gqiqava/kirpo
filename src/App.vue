@@ -1,15 +1,13 @@
 <script setup>
-import { RouterView, useRoute } from 'vue-router'
+import { RouterView } from 'vue-router'
 import RouteManager from './components/RouteManager.vue'
 
-const folders = useRoute()
-
-console.log(folders.fullPath)
+const token = localStorage.getItem('token')
 </script>
 
 <template>
   <div class="landing">
-    <div style="display: flex">
+    <div style="display: flex" v-if="token">
       <RouteManager />
     </div>
     <div>

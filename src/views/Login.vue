@@ -8,6 +8,8 @@ const formData = ref({
   username: null,
   password: null
 })
+const stateValid = ref(true)
+
 // defineProps({
 //   msg: {
 //     type: String,
@@ -16,9 +18,16 @@ const formData = ref({
 // })
 const router = useRouter()
 
-const loginUser = () => {
-  const resposne = login(formData)
-  console.log(111, resposne.value)
+// if (localStorage.getItem('token')) {
+//   router.push('/content')
+// }
+
+const loginUser = async () => {
+  if (Object.values(formData.value).some((el) => el === null || el.length < 3)) {
+    stateValid.value = false
+    return
+  }
+  const resposne = await login(formData)
   router.push('/content')
 }
 </script>
@@ -29,9 +38,21 @@ const loginUser = () => {
     </h1>
     <img :src="mainLogo" alt="logo" style="width: 30%; margin-bottom: 20px" />
     <p>მომხმარებელი</p>
-    <input type="text" name="usrnm" id="" v-model="formData.username" />
+    <input
+      type="text"
+      name="usrnm"
+      id=""
+      v-model="formData.username"
+      :class="stateValid ? null : 'errorTheme'"
+    />
     <p>პაროლი</p>
-    <input type="password" name="pswrd" id="" v-model="formData.password" />
+    <input
+      type="password"
+      name="pswrd"
+      id=""
+      v-model="formData.password"
+      :class="stateValid ? null : 'errorTheme'"
+    />
     <button class="button-4" role="button" style="margin-top: 20px" @click="loginUser">
       შესვლა
     </button>
@@ -45,6 +66,9 @@ const loginUser = () => {
   align-items: center;
   justify-content: start;
   height: 100vh;
+}
+.errorTheme {
+  border-bottom: 2px solid red;
 }
 p {
   font-size: 22px;

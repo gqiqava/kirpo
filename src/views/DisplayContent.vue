@@ -3,7 +3,9 @@ import {
   getDirectoryFiles,
   createFolderAnnotation,
   getFolderAnnotation,
-  editFolderAnnotation
+  editFolderAnnotation,
+  editFolderAnnotationRedactor,
+  createCaseAnnotation
 } from '@/api/api'
 import { ref } from 'vue'
 import { useLocationHandler } from '@/stores/location'
@@ -17,24 +19,49 @@ const { changeLocation } = store
 
 const folders = ref()
 const active = ref(null)
+const userRole = ref(localStorage.getItem('role'))
 const annotationForm = ref({
   folder_no: null,
   year: null,
   description: null,
   scanner_folder_location: null
 })
-
+const annotationFormCase = ref({
+  case_no: null,
+  ip_case: null,
+  // "ip_object_type": "ნიშანი",
+  // "ip_case_name": "მფრინავი სპილო",
+  // "ip_author": "IP_123",
+  // "ip_applicant": "IP_123",
+  // "ip_classes": "IP_123",
+  page_start: null,
+  page_end: null,
+  scanner_folder_annotation: null
+})
 //ddaamate ROute mtliani arraydan
 folders.value = getDirectoryFiles('')
 
 const isCreateModalOpened = ref(false)
 const isEditModalOpened = ref(false)
+const isCreateCaseOpened = ref(false)
 
 const openCreateModal = () => {
   isCreateModalOpened.value = true
 }
+
+const runClose = () => {
+  createFolderAnnotation(annotationForm.value), closeCreateModal()
+}
+const runEdit = () => {
+  userRole == 1
+    ? editFolderAnnotation(annotationForm.value)
+    : editFolderAnnotationRedactor(annotationForm.value),
+    closeEditModal()
+}
+const runCaseClose = () => {
+  createCaseAnnotation(annotationFormCase.value), closeCreateCaseModal()
+}
 const closeCreateModal = () => {
-  createFolderAnnotation(annotationForm.value)
   annotationForm.value = {
     folder_no: null,
     year: null,
@@ -48,7 +75,6 @@ const openEditModal = () => {
   isEditModalOpened.value = true
 }
 const closeEditModal = () => {
-  editFolderAnnotation(annotationForm.value)
   annotationForm.value = {
     folder_no: null,
     year: null,
@@ -56,6 +82,26 @@ const closeEditModal = () => {
     scanner_folder_location: null
   }
   isEditModalOpened.value = false
+}
+
+const openCreateCaseModal = () => {
+  isCreateCaseOpened.value = true
+}
+
+const closeCreateCaseModal = () => {
+  annotationFormCase.value = {
+    case_no: null,
+    ip_case: null,
+    // "ip_object_type": "ნიშანი",
+    // "ip_case_name": "მფრინავი სპილო",
+    // "ip_author": "IP_123",
+    // "ip_applicant": "IP_123",
+    // "ip_classes": "IP_123",
+    page_start: null,
+    page_end: null,
+    scanner_folder_annotation: null
+  }
+  isCreateCaseOpened.value = false
 }
 
 const submitHandler = () => {
@@ -77,20 +123,18 @@ const submitHandler = () => {
       <template #content>
         <div style="display: flex; flex-direction: column; flex-wrap: wrap; gap: 12px">
           <label>Folder no</label>
-          <input v-model="annotationForm.folder_no" type="text" />
+          <input v-model="annotationForm.folder_no" type="text" placeholder="*" />
           <label>Year</label>
-          <input v-model="annotationForm.year" type="number" />
+          <input v-model="annotationForm.year" type="number" placeholder="*" />
           <label>description</label>
-          <input v-model="annotationForm.description" type="text" />
+          <input v-model="annotationForm.description" type="text" placeholder="*" />
           <label>scanner_folder_location</label>
-          <input v-model="annotationForm.scanner_folder_location" type="text" />
+          <input v-model="annotationForm.scanner_folder_location" type="text" placeholder="*" />
         </div>
       </template>
       <template #footer
         ><div style="display: flex; justify-content: end; align-items: end">
-          <button class="button-30" role="button" @click="closeCreateModal">
-            Create annotation
-          </button>
+          <button class="button-30" role="button" @click="runClose">Create annotation</button>
         </div></template
       >
     </Modal>
@@ -106,18 +150,51 @@ const submitHandler = () => {
       <template #content>
         <div style="display: flex; flex-direction: column; flex-wrap: wrap; gap: 12px">
           <label>Folder no</label>
-          <input v-model="annotationForm.folder_no" type="text" />
+          <input v-model="annotationForm.folder_no" type="text" placeholder="*" />
           <label>Year</label>
-          <input v-model="annotationForm.year" type="number" />
+          <input v-model="annotationForm.year" type="number" placeholder="*" />
           <label>description</label>
-          <input v-model="annotationForm.description" type="text" />
+          <input v-model="annotationForm.description" type="text" placeholder="*" />
           <label>scanner_folder_location</label>
-          <input v-model="annotationForm.scanner_folder_location" type="text" />
+          <input v-model="annotationForm.scanner_folder_location" type="text" placeholder="*" />
         </div>
       </template>
       <template #footer
         ><div style="display: flex; justify-content: end; align-items: end">
-          <button class="button-30" role="button" @click="closeEditModal">Edit annotation</button>
+          <button class="button-30" role="button" @click="runEdit">Edit annotation</button>
+        </div></template
+      >
+    </Modal>
+    <Modal
+      :isOpen="isCreateCaseOpened"
+      @modal-close="closeCreateCaseModal"
+      @submit="submitHandler"
+      name="create-case-Modal"
+    >
+      <template #header
+        ><h3 style="width: 100%; text-align: center">{{ active }}</h3></template
+      >
+      <template #content>
+        <div style="display: flex; flex-direction: column; flex-wrap: wrap; gap: 12px">
+          <label>case no</label>
+          <input v-model="annotationFormCase.case_no" type="text" placeholder="*" />
+          <label>ip case</label>
+          <input v-model="annotationFormCase.ip_case" type="text" placeholder="*" />
+          <label>page start</label>
+          <input v-model="annotationFormCase.page_start" type="text" placeholder="*" />
+          <label>page end</label>
+          <input v-model="annotationFormCase.page_end" type="text" placeholder="*" />
+          <label>scanner_folder_annotation</label>
+          <input
+            v-model="annotationFormCase.scanner_folder_annotation"
+            type="text"
+            placeholder="*"
+          />
+        </div>
+      </template>
+      <template #footer
+        ><div style="display: flex; justify-content: end; align-items: end">
+          <button class="button-30" role="button" @click="runCaseClose">Edit annotation</button>
         </div></template
       >
     </Modal>
@@ -140,27 +217,46 @@ const submitHandler = () => {
           class="singleText"
           style="font-size: 14px; font-weight: 300"
           v-if="item.format === 'jpg'"
-          @click="openCreateModal"
+          @click="ss"
         >
           Preview
         </p>
-        <p
-          class="singleText"
-          style="font-size: 14px; font-weight: 300"
-          v-if="item.is_annotated && item.format === 'Folder'"
-          @click="openCreateModal"
-        >
-          Create annotation
-        </p>
-        <p
-          class="singleText"
-          style="font-size: 14px; font-weight: 300"
-          v-else
-          @click="openEditModal"
-        >
-          Edit annotation
-        </p>
-        <p class="singleText" style="font-size: 14px; font-weight: 300">Some annotation</p>
+        <div>
+          <p
+            class="singleText"
+            style="font-size: 14px; font-weight: 300"
+            v-if="item.is_annotated && item.format === 'Folder'"
+            @click="openCreateModal"
+          >
+            Create annotation
+          </p>
+          <p
+            class="singleText"
+            style="font-size: 14px; font-weight: 300"
+            v-else
+            @click="openEditModal"
+          >
+            Edit annotation
+          </p>
+        </div>
+        <div>
+          <p
+            class="singleText"
+            style="font-size: 14px; font-weight: 300"
+            v-if="item.is_annotated > 0 && userRole == 1"
+            @click="openCreateCaseModal"
+          >
+            Add Case annotation
+          </p>
+          <!-- <p
+            class="singleText"
+            style="font-size: 14px; font-weight: 300"
+            v-else
+            @click="openEditCaseModal"
+          >
+            Edit Case annotation
+          </p> -->
+        </div>
       </div>
     </div>
   </div>
@@ -190,6 +286,19 @@ const submitHandler = () => {
 }
 .singleText:hover {
   background-color: #cde8ff;
+}
+input {
+  font-size: 22px;
+}
+
+::placeholder {
+  color: red;
+  opacity: 1; /* Firefox */
+}
+
+::-ms-input-placeholder {
+  /* Edge 12-18 */
+  color: red;
 }
 
 /* CSS */
