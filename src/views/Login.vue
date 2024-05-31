@@ -28,6 +28,7 @@ const loginUser = async () => {
     return
   }
   const resposne = await login(formData.value)
+  console.log(resposne)
   router.push('/content')
 }
 </script>

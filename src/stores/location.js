@@ -4,6 +4,10 @@ import { defineStore } from 'pinia'
 export const useLocationHandler = defineStore('location', () => {
   const location = ref([{ name: 'Kirpicha', format: 'Folder' }])
 
+  const folderLoc = computed(() => {
+    return location.value.length
+  })
+
   const changeLocation = (val) => {
     location.value.push(val)
   }
@@ -12,5 +16,5 @@ export const useLocationHandler = defineStore('location', () => {
     location.value = location.value.slice(0, val + 1)
   }
 
-  return { location, changeLocation, backToLocation }
+  return { location, changeLocation, backToLocation, folderLoc }
 })
