@@ -2,7 +2,7 @@ import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 
 export const useLocationHandler = defineStore('location', () => {
-  const location = ref([{ name: 'Kirpicha', format: 'Folder' }])
+  const location = ref([{ name: 'Scanners', format: 'Folder' }])
 
   const folderLoc = computed(() => {
     return location.value.length

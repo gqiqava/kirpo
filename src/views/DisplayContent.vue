@@ -42,17 +42,17 @@ const annotationFormCase = ref({
 //ddaamate ROute mtliani arraydan
 const { location, folderLoc } = storeToRefs(store)
 
-const initial = async (val) => {
-  folders.value = await getDirectoryFiles(val)
+const initial = async (directory, folder_name) => {
+  folders.value = await getDirectoryFiles(directory, folder_name);
 }
 
-initial()
+initial('Scanners', '');
 
 watch(folderLoc, async () => {
   let tempLocation = location.value.map((el) => {
     return el.name
   })
-  initial(tempLocation.join('/'))
+  initial(tempLocation.at(0), tempLocation.slice(1).join('/'))
 })
 
 const isCreateModalOpened = ref(false)
@@ -72,7 +72,7 @@ const runClose = () => {
   createFolderAnnotation(annotationForm.value), closeCreateModal()
 }
 const runEdit = () => {
-  userRole == 1
+  userRole.value == 1
     ? editFolderAnnotation(annotationForm.value)
     : editFolderAnnotationRedactor(annotationForm.value),
     closeEditModal()
@@ -89,10 +89,11 @@ const closeCreateModal = () => {
   }
   isCreateModalOpened.value = false
 }
-const openEditModal = () => {
-  annotationForm.value = getFolderAnnotation()
-  isEditModalOpened.value = true
-}
+const openEditModal = async (annotationId) => {
+  annotationForm.value = await getFolderAnnotation(annotationId);
+  isEditModalOpened.value = true;
+};
+
 const closeEditModal = () => {
   annotationForm.value = {
     folder_no: null,
@@ -180,7 +181,7 @@ const submitHandler = () => {
       </template>
       <template #footer
         ><div style="display: flex; justify-content: end; align-items: end">
-          <button class="button-30" role="button" @click="runEdit">Edit annotation</button>
+          <button class="button-30" role="button" @click="runEdit">Edit folder annotation</button>
         </div></template
       >
     </Modal>
@@ -213,7 +214,7 @@ const submitHandler = () => {
       </template>
       <template #footer
         ><div style="display: flex; justify-content: end; align-items: end">
-          <button class="button-30" role="button" @click="runCaseClose">Edit annotation</button>
+          <button class="button-30" role="button" @click="runCaseClose">Edit folder annotation</button>
         </div></template
       >
     </Modal>
@@ -237,7 +238,7 @@ const submitHandler = () => {
       </template>
       <template #footer
         ><div style="display: flex; justify-content: end; align-items: end">
-          <button class="button-30" role="button" @click="runCaseClose">Edit annotation</button>
+          <button class="button-30" role="button" @click="runCaseClose">Edit folder annotation</button>
         </div></template
       >
     </Modal>
@@ -312,6 +313,8 @@ const submitHandler = () => {
     </div>
   </div>
 </template>
+
+
 <style scoped>
 .singleFolder {
   position: relative;

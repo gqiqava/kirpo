@@ -1,35 +1,33 @@
-import axios from 'axios'
+import axios from 'axios';
 
 const commonConfig = {
-  baseURL: 'http://192.168.10.5:8000/newapi/'
-}
+  baseURL: 'http://192.168.10.5:8000/newapi/',
+  headers: {
+    'Content-Type': 'application/json'
+  }
+};
 
 const requestInterceptorCallback = (config) => {
-  config.headers['Content-Type'] = 'application/json'
-  config.headers.Authorization = `token ${localStorage.getItem('token')}`
-  return config
-}
-
-const AxiosInst = axios.create({ ...commonConfig })
-
-AxiosInst.interceptors.request.use(requestInterceptorCallback)
-
-AxiosInst.interceptors.request.use(
-  (config) => {
-    console.log(config)
-  },
-  (error) => {
-    console.log('error', error)
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `token ${token}`;
   }
-)
+  return config;
+};
+
+const AxiosInst = axios.create(commonConfig);
+
+AxiosInst.interceptors.request.use(requestInterceptorCallback, (error) => {
+  console.log('Request error', error);
+  return Promise.reject(error);
+});
 
 AxiosInst.interceptors.response.use(
-  (response) => {
-    console.log(response)
-  },
+  (response) => response,
   (error) => {
-    console.log(error)
+    console.log('Response error', error);
+    return Promise.reject(error);
   }
-)
+);
 
-export default AxiosInst
+export default AxiosInst;
