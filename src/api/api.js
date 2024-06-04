@@ -65,9 +65,9 @@ export const editFolderAnnotation = (val, id) => {
 }
 
 export const getFolderAnnotation = (id) => {
-    let resp = AxiosInst.get(`scanner-folder-annotations/${id}`)
+    let resp = AxiosInst.get(`scanner-folder-annotations/${id}/`)
   return resp
-}
+} 
 
 export const editFolderAnnotationRedactor = (val, id) => {
   if (Object.values(val).some((el) => el === null || el === '')) {

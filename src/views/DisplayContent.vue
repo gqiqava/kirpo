@@ -5,7 +5,8 @@ import {
   getFolderAnnotation,
   editFolderAnnotation,
   editFolderAnnotationRedactor,
-  createCaseAnnotation
+  createCaseAnnotation,
+  // getScannerCasesByfolder
 } from '@/api/api'
 import { ref, watch } from 'vue'
 import { useLocationHandler } from '@/stores/location'
@@ -59,22 +60,30 @@ const isCreateModalOpened = ref(false)
 const isEditModalOpened = ref(false)
 const isCreateCaseOpened = ref(false)
 const isCasesOpen = ref(false)
+// const cases = ref([])
 
-const openCreateModal = () => {
+//Create case on folder, set folder_location automatically
+const openCreateModal = async (item) => {
+  annotationForm.value.scanner_folder_location = item.folder_location;
   isCreateModalOpened.value = true
 }
 
-const openCasesModal = () => {
-  isCasesOpen.value = true
-}
+const openCasesModal = async (item) => {
+  console.log(12313)
+    annotationFormCase.value.scanner_folder_annotation = item.is_annotated;
+    isCasesOpen.value = true;
+  }
+
 
 const runClose = () => {
   createFolderAnnotation(annotationForm.value), closeCreateModal()
 }
 const runEdit = () => {
+  const id = annotationForm.value.scanner_folder_location
+  console.log(78798797)
   userRole.value == 1
-    ? editFolderAnnotation(annotationForm.value)
-    : editFolderAnnotationRedactor(annotationForm.value),
+    ? editFolderAnnotation(annotationForm.value, id)
+    : editFolderAnnotationRedactor(annotationForm.value, id),
     closeEditModal()
 }
 const runCaseClose = () => {
@@ -90,7 +99,8 @@ const closeCreateModal = () => {
   isCreateModalOpened.value = false
 }
 const openEditModal = async (annotationId) => {
-  annotationForm.value = await getFolderAnnotation(annotationId);
+  const response = await getFolderAnnotation(annotationId);
+  annotationForm.value = response.data; // Assuming the response structure has a `data` property
   isEditModalOpened.value = true;
 };
 
@@ -104,7 +114,9 @@ const closeEditModal = () => {
   isEditModalOpened.value = false
 }
 
-const openCreateCaseModal = () => {
+const openCreateCaseModal = async (item) => {
+  console.log(item.folder_location)
+  annotationFormCase.value.scanner_folder_annotation = item.is_annotated;
   isCreateCaseOpened.value = true
 }
 
@@ -154,7 +166,7 @@ const submitHandler = () => {
       </template>
       <template #footer
         ><div style="display: flex; justify-content: end; align-items: end">
-          <button class="button-30" role="button" @click="runClose">Create annotation</button>
+          <button class="button-30" role="button" @click="runClose">Create folder annotation</button>
         </div></template
       >
     </Modal>
@@ -214,33 +226,27 @@ const submitHandler = () => {
       </template>
       <template #footer
         ><div style="display: flex; justify-content: end; align-items: end">
-          <button class="button-30" role="button" @click="runCaseClose">Edit folder annotation</button>
+          <button class="button-30" role="button" @click="runCaseClose">Add case annotation</button>
         </div></template
       >
     </Modal>
     <Modal
       :isOpen="isCasesOpen"
-      @modal-close="closeCreateCaseModal"
+      @modal-close="() => { isCasesOpen.value = false }"
       @submit="submitHandler"
-      name="create-case-Modal"
+      name="view-cases-Modal"
     >
-      <template #header
-        ><h3 style="width: 100%; text-align: center">{{ active }}</h3></template
-      >
+      <template #header>
+        <h3 style="width: 100%; text-align: center">Cases in {{ active }}</h3>
+      </template>
       <template #content>
-        <div style="display: flex; flex-direction: column; flex-wrap: wrap; gap: 12px">
-          <p>asdasdasd</p>
-          <p>asdasdasd</p>
-          <p>asdasdasd</p>
-          <p>asdasdasd</p>
-          <p>asdasdasd</p>
+        <div style="display: flex; flex-direction: column; gap: 12px">
+          <div v-for="caseItem in cases" :key="caseItem.id" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>{{ caseItem.case_no }}</span>
+            <button class="button-30" role="button" @click="openEditCaseModal(caseItem)">Edit Case</button>
+          </div>
         </div>
       </template>
-      <template #footer
-        ><div style="display: flex; justify-content: end; align-items: end">
-          <button class="button-30" role="button" @click="runCaseClose">Edit folder annotation</button>
-        </div></template
-      >
     </Modal>
     <div
       v-for="item in folders"
@@ -269,16 +275,16 @@ const submitHandler = () => {
           <p
             class="singleText"
             style="font-size: 14px; font-weight: 300"
-            v-if="!item.is_annotated && item.format === 'Folder'"
-            @click="openCreateModal"
+            v-if="item.is_annotated === 0 && item.format === 'Folder'"
+            @click="openCreateModal(item)"
           >
             Create annotation
           </p>
           <p
             class="singleText"
             style="font-size: 14px; font-weight: 300"
-            v-else
-            @click="openEditModal"
+            v-else-if="item.is_annotated"
+            @click="openEditModal(item.is_annotated)"
           >
             Edit annotation
           </p>
@@ -288,7 +294,7 @@ const submitHandler = () => {
             class="singleText"
             style="font-size: 14px; font-weight: 300"
             v-if="item.is_annotated > 0 && userRole == 1"
-            @click="openCreateCaseModal"
+            @click="openCreateCaseModal(item)"
           >
             Add Case annotation
           </p>
@@ -313,7 +319,6 @@ const submitHandler = () => {
     </div>
   </div>
 </template>
-
 
 <style scoped>
 .singleFolder {
