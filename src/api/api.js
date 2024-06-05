@@ -81,27 +81,24 @@ export const editFolderAnnotationRedactor = (val, id) => {
 }
 
 export const createCaseAnnotation = (val) => {
-  if (Object.values(val).some((el) => el === null || el === '')) {
-    alert('შეავსეთ ყველა ველი')
-    return
-  }
   const body = val
     let resp = AxiosInst.post('scanner-case-annotations/', body)
   return resp
 }
 
-export const editCaseAnnotation = (val) => {
-  if (Object.values(val).some((el) => el === null || el === '')) {
-    alert('შეავსეთ ყველა ველი')
-    return
-  }
+export const editCaseAnnotation = (val, id) => {
   const body = val
-    let resp = AxiosInst.post('newapi/scanner-case-annotations/', body)
+    let resp = AxiosInst.put(`scanner-case-annotations/${id}/`, body)
 
   return resp
 }
 
 export const getScannerCasesByfolder = (id) => {
-    let resp = AxiosInst.get(`scanner-cases-by-folder/${id}`)
+    let resp = AxiosInst.get(`scanner-cases-by-folder/${id}/`)
   return resp
 }
+
+export const getCaseAnnotation = (id) => {
+  let resp = AxiosInst.get(`scanner-case-annotations/${id}/`)
+return resp
+} 
