@@ -42,6 +42,7 @@ export const viewImage = () => {
   return resp
 }
 
+//Scanner api
 export const createFolderAnnotation = (val) => {
   if (Object.values(val).some((el) => el === null || el === '')) {
     alert('შეავსეთ ყველა ველი')
@@ -69,17 +70,6 @@ export const getFolderAnnotation = (id) => {
   return resp
 } 
 
-export const editFolderAnnotationRedactor = (val, id) => {
-  if (Object.values(val).some((el) => el === null || el === '')) {
-    alert('შეავსეთ ყველა ველი')
-    return
-  }
-  
-  const body = val
-  let resp = AxiosInst.put(`redactor-folder-annotations/${id}/`, body)
-  return resp
-}
-
 export const createCaseAnnotation = (val) => {
   const body = val
     let resp = AxiosInst.post('scanner-case-annotations/', body)
@@ -102,3 +92,42 @@ export const getCaseAnnotation = (id) => {
   let resp = AxiosInst.get(`scanner-case-annotations/${id}/`)
 return resp
 } 
+
+//Redactor api
+export const editFolderAnnotationRedactor = (val, id) => {
+  if (Object.values(val).some((el) => el === null || el === '')) {
+    alert('შეავსეთ ყველა ველი')
+    return
+  }
+  
+  const body = val
+  let resp = AxiosInst.put(`redactor-folder-annotations/${id}/`, body)
+  return resp
+}
+
+export const editCaseAnnotationRedactor = (val, id) => {
+  const body = val
+    let resp = AxiosInst.put(`redactor-case-annotations/${id}/`, body)
+
+  return resp
+}
+
+export const getScannerCasesByfolderRedactor = (id) => {
+    let resp = AxiosInst.get(`redactor-cases-by-folder/${id}/`)
+  return resp
+}
+
+export const getCaseAnnotationRedactor = (id) => {
+  let resp = AxiosInst.get(`redactor-case-annotations/${id}/`)
+return resp
+} 
+
+export const getFolderAnnotationRedactor = (id) => {
+  let resp = AxiosInst.get(`redactor-folder-annotations/${id}/`)
+return resp
+} 
+
+export const publishCatalog = (id) => {
+    let resp = AxiosInst.post(`publish-folder/${id}/`)
+  return resp
+}

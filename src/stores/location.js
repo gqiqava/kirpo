@@ -2,7 +2,12 @@ import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 
 export const useLocationHandler = defineStore('location', () => {
+  const userRole = ref(localStorage.getItem('role'))
   const location = ref([{ name: 'Scanners', format: 'Folder' }])
+
+  if (userRole.value == 2) {
+    location.value = [{ name: 'Redactors', format: 'Folder' }]
+  }
 
   const folderLoc = computed(() => {
     return location.value.length

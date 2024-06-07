@@ -4,11 +4,18 @@ import {
   createFolderAnnotation,
   getFolderAnnotation,
   editFolderAnnotation,
-  editFolderAnnotationRedactor,
   createCaseAnnotation,
   getScannerCasesByfolder,
   getCaseAnnotation,
-  editCaseAnnotation // Import the correct API function
+  editCaseAnnotation,
+  //Redactor API
+  getFolderAnnotationRedactor,
+  editFolderAnnotationRedactor,
+  editCaseAnnotationRedactor,
+  getScannerCasesByfolderRedactor,
+  getCaseAnnotationRedactor, // Import the correct API function
+  //Publish folder in catalog API
+  publishCatalog
 } from '@/api/api'
 import { ref, watch } from 'vue'
 import { useLocationHandler } from '@/stores/location'
@@ -28,7 +35,8 @@ const annotationForm = ref({
   folder_no: null,
   year: null,
   description: null,
-  scanner_folder_location: null
+  scanner_folder_location: null,
+  redactor_folder_location: null
 })
 const annotationFormCase = ref({
     case_no: null,
@@ -43,6 +51,9 @@ const annotationFormCase = ref({
     scanner_folder_annotation: null
 })
 const cases = ref([]) // New ref for storing cases
+const publishMessage = ref(''); // New ref for storing the publish message
+const isPublishModalOpened = ref(false); // New ref for controlling the publish modal visibility
+const folderToPublish = ref(null); // New ref for storing the folder to be publishe
 
 const { location, folderLoc } = storeToRefs(store)
 
@@ -50,7 +61,9 @@ const initial = async (directory, folder_name) => {
   folders.value = await getDirectoryFiles(directory, folder_name);
 }
 
-initial('Scanners', '');
+if (userRole.value == 1) initial('Scanners', '');
+else initial('Redactors', '');
+    
 
 watch(folderLoc, async () => {
   let tempLocation = location.value.map((el) => {
@@ -67,20 +80,28 @@ const isEditCaseModalOpened = ref(false)
 
 const openCreateModal = async (item) => {
   annotationForm.value.scanner_folder_location = item.folder_location;
+  annotationForm.value.redactor_folder_location = item.folder_location;
   isCreateModalOpened.value = true
 }
 
 const openCasesModal = async (item) => {
-    cases.value = await getScannerCasesByfolder(item.is_annotated);
+  userRole.value == 1
+    ? cases.value = await getScannerCasesByfolder(item.is_annotated)
+    : cases.value = await getScannerCasesByfolderRedactor(item.is_annotated)
     console.log(cases.value.data) // Fetch cases for the specified folder
     isCasesOpen.value = true
+}
+
+const closeViewCasesModal = () =>{
+  isCasesOpen.value=false
 }
 
 const runClose = () => {
   createFolderAnnotation(annotationForm.value), closeCreateModal()
 }
 const runEdit = () => {
-  const id = annotationForm.value.scanner_folder_location
+  const id = annotationForm.value.id
+  console.log(annotationForm)
   userRole.value == 1
     ? editFolderAnnotation(annotationForm.value, id)
     : editFolderAnnotationRedactor(annotationForm.value, id),
@@ -94,12 +115,15 @@ const closeCreateModal = () => {
     folder_no: null,
     year: null,
     description: null,
-    scanner_folder_location: null
+    scanner_folder_location: null,
+    redactor_folder_location: null
   }
   isCreateModalOpened.value = false
 }
 const openEditModal = async (annotationId) => {
-  const response = await getFolderAnnotation(annotationId);
+  let response;
+  if (userRole.value == 1) response = await getFolderAnnotation(annotationId)
+  else if (userRole.value == 2) response = await getFolderAnnotationRedactor(annotationId)
   annotationForm.value = response.data; // Assuming the response structure has a `data` property
   isEditModalOpened.value = true;
 };
@@ -109,7 +133,8 @@ const closeEditModal = () => {
     folder_no: null,
     year: null,
     description: null,
-    scanner_folder_location: null
+    scanner_folder_location: null,
+    redactor_folder_location: null
   }
   isEditModalOpened.value = false
 }
@@ -138,7 +163,12 @@ const closeCreateCaseModal = () => {
 const currentCaseId = ref(null)
 
 const openEditCaseModal = async (id) => {
-  const response = await getCaseAnnotation(id);
+  let response;
+  if (userRole.value == 1) {
+    response = await getCaseAnnotation(id);
+  } else {
+    response = await getCaseAnnotationRedactor(id);
+  }
   currentCaseId.value = id;
   annotationFormCase.value = response.data; // Assuming the response structure has a `data` property
   isEditCaseModalOpened.value = true;
@@ -156,9 +186,31 @@ const closeEditCaseModal = () => {
   currentCaseId.value = null
 }
 
+const openPublishModal = (id) => {
+  folderToPublish.value = id;
+  isPublishModalOpened.value = true;
+};
+
+const confirmPublish = async () => {
+  if (folderToPublish.value) {
+    console.log(folderToPublish)
+    const response = await publishCatalog(folderToPublish.value);
+    publishMessage.value = response.error || "Folder published successfully";
+    isPublishModalOpened.value = false;
+    folderToPublish.value = null;
+  }
+};
+
+const cancelPublish = () => {
+  isPublishModalOpened.value = false;
+  folderToPublish.value = null;
+};
+
 const runEditCase = () => {
   console.log(annotationFormCase)
-  editCaseAnnotation(annotationFormCase.value, currentCaseId.value)
+  userRole.value == 1 
+  ? editCaseAnnotation(annotationFormCase.value, currentCaseId.value)
+  : editCaseAnnotationRedactor(annotationFormCase.value, currentCaseId.value)
   closeEditCaseModal()
 }
 
@@ -188,6 +240,8 @@ const submitHandler = () => {
           <input v-model="annotationForm.description" type="text" placeholder="*" />
           <label>Scanner Folder Location</label>
           <input v-model="annotationForm.scanner_folder_location" type="text" placeholder="*" />
+          <label>Redactor Folder Location</label>
+          <input v-model="annotationForm.redactor_folder_location" type="text" placeholder="*" />
         </div>
       </template>
       <template #footer>
@@ -216,6 +270,8 @@ const submitHandler = () => {
           <input v-model="annotationForm.description" type="text" placeholder="*" />
           <label>Scanner Folder Location</label>
           <input v-model="annotationForm.scanner_folder_location" type="text" placeholder="*" />
+          <label>Redactor Folder Location</label>
+          <input v-model="annotationForm.redactor_folder_location" type="text" placeholder="*" />
         </div>
       </template>
       <template #footer>
@@ -265,7 +321,7 @@ const submitHandler = () => {
 
     <Modal
     :isOpen="isCasesOpen"
-    @modal-close="() => { isCasesOpen.value = false }"
+    @modal-close="closeViewCasesModal"
     @submit="submitHandler"
     name="view-cases-Modal"
   >
@@ -282,6 +338,11 @@ const submitHandler = () => {
         </div>
       </div>
     </template>
+    <template #footer>
+        <div style="display: flex; justify-content: end; align-items: end">
+          <button class="button-30" role="button" @click="closeViewCasesModal">Close</button>
+        </div>
+      </template>
   </Modal>
 
   <Modal
@@ -321,6 +382,21 @@ const submitHandler = () => {
       </div>
     </template>
   </Modal>
+
+  <Modal
+      :isOpen="isPublishModalOpened"
+      name="edit-case-Modal" v-if="isPublishModalOpened" @close="cancelPublish">
+      <template #header>
+        <h3>Confirm Publish</h3>
+      </template>
+      <template #body>
+        <p>Are you sure you want to publish this folder?</p>
+      </template>
+      <template #footer>
+        <button @click="confirmPublish">Yes</button>
+        <button @click="cancelPublish">No</button>
+      </template>
+    </Modal>
 
     <div
       v-for="item in folders"
@@ -375,10 +451,20 @@ const submitHandler = () => {
           <p
             class="singleText"
             style="font-size: 14px; font-weight: 300"
-            v-if="item.is_annotated > 0 && userRole == 1"
+            v-if="item.is_annotated > 0"
             @click="openCasesModal(item)"
           >
             View Cases
+          </p>
+        </div>
+        <div>
+           <p
+            class="singleText"
+            style="font-size: 14px; font-weight: 300"
+            v-if="item.is_annotated && userRole == 2 && item.format === 'Folder'"
+            @click="openPublishModal(item.is_annotated)"
+          >
+            Publish Folder
           </p>
         </div>
       </div>
