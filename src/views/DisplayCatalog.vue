@@ -15,9 +15,7 @@ import {
   getScannerCasesByfolderRedactor,
   getCaseAnnotationRedactor, // Import the correct API function
   //Publish folder in catalog API
-  publishCatalog,
-  //Return case API
-  returnCase
+  publishCatalog
 } from '@/api/api'
 import { ref, watch } from 'vue'
 import { useLocationHandler } from '@/stores/location'
@@ -57,18 +55,13 @@ const publishMessage = ref(''); // New ref for storing the publish message
 const isPublishModalOpened = ref(false); // New ref for controlling the publish modal visibility
 const folderToPublish = ref(null); // New ref for storing the folder to be publishe
 
-const returnMessage = ref(''); // New ref for storing the return message
-const isReturnCaseModalOpen = ref(false); // New ref for controlling the return case modal visibility
-const selectedCaseId = ref(null); // New ref for storing the selected case ID for return
-
 const { location, folderLoc } = storeToRefs(store)
 
 const initial = async (directory, folder_name) => {
   folders.value = await getDirectoryFiles(directory, folder_name);
 }
 
-if (userRole.value == 1) initial('Scanners', '');
-else initial('Redactors', '');
+initial('Catalog', '');
     
 
 watch(folderLoc, async () => {
@@ -220,35 +213,6 @@ const runEditCase = () => {
   closeEditCaseModal()
 }
 
-const openReturnCaseModal = (caseId) => {
-  selectedCaseId.value = caseId;
-  isReturnCaseModalOpen.value = true;
-};
-
-const closeReturnCaseModal = () => {
-  selectedCaseId.value = null;
-  returnMessage.value = '';
-  isReturnCaseModalOpen.value = false;
-};
-
-const submitReturnCase = async () => {
-  if (selectedCaseId.value && returnMessage.value.trim() !== '') {
-    try {
-      const response = await returnCase({
-        case_id: selectedCaseId.value,
-        message: returnMessage.value,
-      });
-      console.log('Case returned successfully:', response.data);
-      closeReturnCaseModal();
-      // Optionally refresh the cases list or emit an event
-    } catch (error) {
-      console.error('Error returning case:', error);
-    }
-  } else {
-    alert('Please enter a message.');
-  }
-};
-
 const submitHandler = () => {
   // Handle form submission if needed
 }
@@ -370,8 +334,6 @@ const submitHandler = () => {
             <span><strong>Case No:</strong> {{ caseItem.case_no }}</span><br>
           </div>
           <button class="button-30" role="button" @click="openEditCaseModal(caseItem.id)">Edit Case Annotation</button>
-          
-          <button v-if="userRole == 2" class="button-30" role="button" @click="openReturnCaseModal(caseItem.id)">Return Case</button>
         </div>
       </div>
     </template>
@@ -380,30 +342,6 @@ const submitHandler = () => {
           <button class="button-30" role="button" @click="closeViewCasesModal">Close</button>
         </div>
       </template>
-  </Modal>
-
-  <!-- Return Case Modal -->
-  <Modal
-    :isOpen="isReturnCaseModalOpen"
-    @modal-close="closeReturnCaseModal"
-    @submit="submitReturnCase"
-    name="return-case-modal"
-  >
-    <template #header>
-      <h3 style="width: 100%; text-align: center">Return Case</h3>
-    </template>
-    <template #content>
-      <div style="display: flex; flex-direction: column; gap: 12px">
-        <label for="returnMessage"><strong>Message:</strong></label>
-        <textarea v-model="returnMessage" id="returnMessage" rows="4" style="width: 100%;"></textarea>
-      </div>
-    </template>
-    <template #footer>
-      <div style="display: flex; justify-content: end; align-items: end">
-        <button class="button-30" role="button" @click="closeReturnCaseModal">Cancel</button>
-        <button class="button-30" role="button" @click="submitReturnCase">Submit</button>
-      </div>
-    </template>
   </Modal>
 
   <Modal

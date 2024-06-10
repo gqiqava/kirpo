@@ -131,3 +131,13 @@ export const publishCatalog = (id) => {
     let resp = AxiosInst.post(`publish-folder/${id}/`)
   return resp
 }
+
+export const returnCase = async (val) => {
+  try {
+    const response = await AxiosInst.post('return-case/', val);
+    return response.data;
+  } catch (error) {
+    console.error('Error returning case:', error);
+    throw error;
+  }
+}
