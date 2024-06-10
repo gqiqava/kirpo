@@ -17,7 +17,9 @@ import {
   //Publish folder in catalog API
   publishCatalog,
   //Return case API
-  returnCase
+  returnCase,
+  //Download file
+  //downloadFile
 } from '@/api/api'
 import { ref, watch } from 'vue'
 import { useLocationHandler } from '@/stores/location'
@@ -84,6 +86,20 @@ const isCreateCaseOpened = ref(false)
 const isCasesOpen = ref(false)
 const isEditCaseModalOpened = ref(false)
 
+const isCorrectCaseModalOpened = ref(false)
+
+const isMessageModalOpen = ref(false); // Control the visibility of the message modal
+const currentMessage = ref(''); // Store the current message to display
+
+const showMessage = (message) => {
+  currentMessage.value = message;
+  isMessageModalOpen.value = true;
+};
+
+const closeMessageModal = () => {
+  currentMessage.value = '';
+  isMessageModalOpen.value = false;
+};
 const openCreateModal = async (item) => {
   annotationForm.value.scanner_folder_location = item.folder_location;
   annotationForm.value.redactor_folder_location = item.folder_location;
@@ -220,6 +236,29 @@ const runEditCase = () => {
   closeEditCaseModal()
 }
 
+const openCorrectCaseModal = async (id) => {
+  let response = await getCaseAnnotationRedactor(id);
+  currentCaseId.value = id;
+  annotationFormCase.value = response.data; // Assuming the response structure has a `data` property
+  isCorrectCaseModalOpened.value = true;
+};
+
+const runCorrectCase = () => {
+  editCaseAnnotationRedactor(annotationFormCase.value, currentCaseId.value)
+  closeCorrectCaseModal()
+}
+
+const closeCorrectCaseModal = () => {
+  annotationFormCase.value = {
+    case_no: null,
+    ip_case: null,
+    page_start: null,
+    page_end: null,
+    scanner_folder_annotation: null
+  }
+  isCorrectCaseModalOpened.value = false
+  currentCaseId.value = null
+}
 const openReturnCaseModal = (caseId) => {
   selectedCaseId.value = caseId;
   isReturnCaseModalOpen.value = true;
@@ -445,6 +484,41 @@ const submitHandler = () => {
   </Modal>
 
   <Modal
+    :isOpen="isCorrectCaseModalOpened"
+    @modal-close="closeCorrectCaseModal"
+    @submit="runCorrectCase"
+    name="edit-case-Modal"
+  >
+    <template #header>
+      <h3 style="width: 100%; text-align: center">Correct Case Annotation</h3>
+    </template>
+    <template #content>
+      <div style="display: flex; flex-direction: column; gap: 12px">
+        <label>Case No</label>
+        <input v-model="annotationFormCase.case_no" type="text" placeholder="*" required />
+        <label>IP Case</label>
+        <input v-model="annotationFormCase.ip_case" type="text" placeholder="Optional" />
+        <label>IP Object Type</label>
+        <input v-model="annotationFormCase.ip_object_type" type="text" placeholder="Optional" />
+        <label>IP Case Name</label>
+        <input v-model="annotationFormCase.ip_case_name" type="text" placeholder="Optional" />
+        <label>IP Author</label>
+        <input v-model="annotationFormCase.ip_author" type="text" placeholder="Optional" />
+        <label>IP Applicant</label>
+        <input v-model="annotationFormCase.ip_applicant" type="text" placeholder="Optional" />
+        <label>IP Classes</label>
+        <input v-model="annotationFormCase.ip_classes" type="text" placeholder="Optional" />
+      </div>
+    </template>
+    <template #footer>
+      <div style="display: flex; justify-content: end; align-items: end">
+        <button class="button-30" role="button" @click="runCorrectCase">Edit Case Annotation</button>
+      </div>
+    </template>
+  </Modal>
+
+
+  <Modal
       :isOpen="isPublishModalOpened"
       name="edit-case-Modal" v-if="isPublishModalOpened" @close="cancelPublish">
       <template #header>
@@ -456,6 +530,19 @@ const submitHandler = () => {
       <template #footer>
         <button @click="confirmPublish">Yes</button>
         <button @click="cancelPublish">No</button>
+      </template>
+    </Modal>
+
+    <!-- Message Modal -->
+    <Modal :isOpen="isMessageModalOpen" @modal-close="closeMessageModal" name="Message-Modal">
+      <template #header>
+        <h3 style="width: 100%; text-align: center">Message</h3>
+      </template>
+      <template #content>
+        <p>{{ currentMessage }}</p>
+      </template>
+      <template #footer>
+        <button @click="closeMessageModal">Close</button>
       </template>
     </Modal>
 
@@ -516,6 +603,22 @@ const submitHandler = () => {
             @click="openCasesModal(item)"
           >
             View Cases
+          </p>
+          <p
+            class="singleText"
+            style="font-size: 14px; font-weight: 300"
+            v-if="item.returned"
+            @click="showMessage(item.returned)"
+          >
+            View Message
+          </p>
+          <p
+            class="singleText"
+            style="font-size: 14px; font-weight: 300"
+            v-if="item.corrected"
+            @click="openCorrectCaseModal(item.corrected)"
+          >
+            Correct Case Annotation
           </p>
         </div>
         <div>

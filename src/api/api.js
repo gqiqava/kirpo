@@ -141,3 +141,39 @@ export const returnCase = async (val) => {
     throw error;
   }
 }
+
+export const downloadFile = async (directory, folderName) => {
+  try {
+    // Send a GET request to the download endpoint
+    const response = await AxiosInst.get(`download/?directory=${directory}&folder_name=${folderName}`, {
+      responseType: 'blob', // Set response type to blob to handle binary data
+    });
+
+    // Check if the response is successful
+    if (response.status === 200) {
+      // Create a blob from the response data
+      const blob = new Blob([response.data], { type: response.headers['content-type'] });
+
+      // Create a temporary URL for the blob
+      const url = window.URL.createObjectURL(blob);
+
+      // Create a temporary anchor element
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${folderName}.zip`); // Set the file name for download
+      document.body.appendChild(link);
+
+      // Trigger the click event to start the download
+      link.click();
+
+      // Clean up: remove the temporary anchor and revoke the URL
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } else {
+      console.error('Download failed:', response.statusText);
+    }
+  } catch (error) {
+    console.error('Error downloading file:', error);
+    throw error;
+  }
+};
