@@ -28,8 +28,15 @@ const loginUser = async () => {
     return
   }
   const resposne = await login(formData.value)
-  console.log(resposne)
-  router.push('/content')
+  localStorage.setItem('token', resposne.token);
+
+  setTimeout(() => {
+    location.reload()
+  }, 100);
+  if(resposne.role_id == 1) router.push('/content')
+  if(resposne.role_id == 2) router.push('/content')
+  if(resposne.role_id == 3) router.push('/initial')
+  
 }
 </script>
 <template>

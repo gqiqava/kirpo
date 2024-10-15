@@ -1,5 +1,6 @@
 import AxiosInst from './axiosInstance'
 import axios from 'axios'
+import { useLocationHandler } from '@/stores/location';
 
 export const login = async (val) => {
   try {
@@ -16,7 +17,36 @@ export const login = async (val) => {
   }
 };
 
+export const logout = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) throw new Error('No token found');
+
+    const response = await AxiosInst.post('logout/', {}, {
+      headers: {
+        'Authorization': `token ${token}`
+      }
+    });
+
+    localStorage.removeItem('token');
+    localStorage.removeItem('role');
+    setTimeout(() => {
+      location.reload()
+    }, 100);
+
+    return response.data;
+  } catch (error) {
+    console.error('Logout error', error);
+    throw error;
+  }
+};
+
 export const getDirectoryFiles = async (directory, folder_name) => {
+  const store = useLocationHandler(); 
+  const { setIsLoading } = store;
+
+  setIsLoading(true); 
+
   const body = {
     directory: directory,
     folder_name: folder_name
@@ -24,20 +54,22 @@ export const getDirectoryFiles = async (directory, folder_name) => {
   try {
     const response = await AxiosInst.post('view-files/', body);
     console.log('Response data:', response);
+    setIsLoading(false); 
     return response.data;
   } catch (error) {
+    setIsLoading(false); 
     console.error('Error fetching directory files:', error);
     throw error;
   }
 }
 
-export const viewImage = () => {
+export const viewImage = async (directory, folder_name, image_name) => {
   const body = {
-    directory: 'Scanners',
-    folder_name: 'mzia chachanidze/folder 5',
-    image_name: 'doxumenti.JPG'
+    directory: directory,
+    folder_name: folder_name,
+    image_name: image_name
   }
-    let resp = AxiosInst.get('newapi/view-image/', body)
+    let resp = AxiosInst.post('view-image/', body, { responseType: 'blob' })
 
   return resp
 }
@@ -132,6 +164,21 @@ export const publishCatalog = (id) => {
   return resp
 }
 
+export const sendFolderToScanner = async (val) => {
+  try {
+    const response = await AxiosInst.post('send-to-scanner/', val);
+    return response;
+  } catch (error) {
+    console.error('Error sending folder to scanner:', error);
+    throw error; // Re-throw or handle the error as needed
+  }
+};
+
+export const sendFolder = (id) => {
+  let resp = AxiosInst.post(`send-to-redactor/${id}/`)
+return resp
+}
+
 export const returnCase = async (val) => {
   try {
     const response = await AxiosInst.post('return-case/', val);
@@ -142,12 +189,58 @@ export const returnCase = async (val) => {
   }
 }
 
-export const downloadFile = async (directory, folderName) => {
+// Description APIs
+
+// Create a new description
+export const createDescription = async (descriptionData) => {
+  try {
+    const response = await AxiosInst.post('descriptions/', descriptionData);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating description:', error);
+    throw error;
+  }
+};
+
+// Edit an existing description
+export const editDescription = async (id, descriptionData) => {
+  try {
+    const response = await AxiosInst.put(`descriptions/${id}/`, descriptionData);
+    return response.data;
+  } catch (error) {
+    console.error('Error editing description:', error);
+    throw error;
+  }
+};
+
+// Get descriptions based on filters
+export const getDescriptions = async (params) => {
+  try {
+    const response = await AxiosInst.get('descriptions/', { params });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching descriptions:', error);
+    throw error;
+  }
+};
+
+//Catalog Api
+export const filterCases = (val) => {
+  const body = val
+    let resp = AxiosInst.post('search-catalog/', body)
+  return resp
+}
+
+export const downloadFile = async (directory, folder_name) => {
+  console.log(directory);
+  const body = {
+    directory: directory,
+    folder_name: folder_name,
+    responseType: 'blob'
+  }
   try {
     // Send a GET request to the download endpoint
-    const response = await AxiosInst.get(`download/?directory=${directory}&folder_name=${folderName}`, {
-      responseType: 'blob', // Set response type to blob to handle binary data
-    });
+    const response = await AxiosInst.post(`download/`, body);
 
     // Check if the response is successful
     if (response.status === 200) {
@@ -160,7 +253,7 @@ export const downloadFile = async (directory, folderName) => {
       // Create a temporary anchor element
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `${folderName}.zip`); // Set the file name for download
+      link.setAttribute('download', `${folder_name}.zip`); // Set the file name for download
       document.body.appendChild(link);
 
       // Trigger the click event to start the download

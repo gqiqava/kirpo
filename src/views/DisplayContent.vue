@@ -13,13 +13,15 @@ import {
   editFolderAnnotationRedactor,
   editCaseAnnotationRedactor,
   getScannerCasesByfolderRedactor,
-  getCaseAnnotationRedactor, // Import the correct API function
+  getCaseAnnotationRedactor,
+  viewImage, // Import the correct API function
   //Publish folder in catalog API
   publishCatalog,
   //Return case API
   returnCase,
   //Download file
-  //downloadFile
+  downloadFile,
+  sendFolder
 } from '@/api/api'
 import { ref, watch } from 'vue'
 import { useLocationHandler } from '@/stores/location'
@@ -59,6 +61,10 @@ const publishMessage = ref(''); // New ref for storing the publish message
 const isPublishModalOpened = ref(false); // New ref for controlling the publish modal visibility
 const folderToPublish = ref(null); // New ref for storing the folder to be publishe
 
+const sendFolderMessage = ref(''); // New ref for storing the publish message
+const isSendFolderModalOpened = ref(false); // New ref for controlling the publish modal visibility
+const folderToSend = ref(null); // New ref for storing the folder to be publishe
+
 const returnMessage = ref(''); // New ref for storing the return message
 const isReturnCaseModalOpen = ref(false); // New ref for controlling the return case modal visibility
 const selectedCaseId = ref(null); // New ref for storing the selected case ID for return
@@ -70,21 +76,34 @@ const initial = async (directory, folder_name) => {
 }
 
 if (userRole.value == 1) initial('Scanners', '');
-else initial('Redactors', '');
+if (userRole.value == 2) initial('Redactors', '');
+if (userRole.value == 3) initial('Initial', '');
     
-
+let tempLocation;
 watch(folderLoc, async () => {
-  let tempLocation = location.value.map((el) => {
+  tempLocation = location.value.map((el) => {
     return el.name
   })
   initial(tempLocation.at(0), tempLocation.slice(1).join('/'))
 })
+
+const handleDownload = async (folder_name) => {
+ // Adjust this based on the structure of your 'item' object
+  try {
+    await downloadFile(tempLocation.at(0), tempLocation.slice(1).join('/') + '/' + folder_name);
+  } catch (error) {
+    console.error('Error downloading file:', error);
+    // Handle error if necessary
+  }
+};
 
 const isCreateModalOpened = ref(false)
 const isEditModalOpened = ref(false)
 const isCreateCaseOpened = ref(false)
 const isCasesOpen = ref(false)
 const isEditCaseModalOpened = ref(false)
+
+const previewImage = ref(null)
 
 const isCorrectCaseModalOpened = ref(false)
 
@@ -161,11 +180,6 @@ const closeEditModal = () => {
   isEditModalOpened.value = false
 }
 
-const openCreateCaseModal = async (item) => {
-  annotationFormCase.value.scanner_folder_annotation = item.is_annotated;
-  isCreateCaseOpened.value = true
-}
-
 const closeCreateCaseModal = () => {
   annotationFormCase.value = {
     case_no: null,
@@ -228,6 +242,26 @@ const cancelPublish = () => {
   folderToPublish.value = null;
 };
 
+const openSendFolderModal = (id) => {
+  folderToSend.value = id;
+  isSendFolderModalOpened.value = true;
+};
+
+const confirmSendFolder = async () => {
+  if (folderToSend.value) {
+    console.log(folderToSend)
+    const response = await sendFolder(folderToSend.value);
+    sendFolderMessage.value = response.error || "Folder Sent successfully";
+    isSendFolderModalOpened.value = false;
+    folderToSend.value = null;
+  }
+};
+
+const cancelSend = () => {
+  isSendFolderModalOpened.value = false;
+  folderToSend.value = null;
+};
+
 const runEditCase = () => {
   console.log(annotationFormCase)
   userRole.value == 1 
@@ -259,10 +293,6 @@ const closeCorrectCaseModal = () => {
   isCorrectCaseModalOpened.value = false
   currentCaseId.value = null
 }
-const openReturnCaseModal = (caseId) => {
-  selectedCaseId.value = caseId;
-  isReturnCaseModalOpen.value = true;
-};
 
 const closeReturnCaseModal = () => {
   selectedCaseId.value = null;
@@ -288,9 +318,41 @@ const submitReturnCase = async () => {
   }
 };
 
+const displayFileName = (name) => {
+  if (name.length < 12) {
+    return name;
+  }
+  const dotIndex = name.lastIndexOf('.');
+  if (dotIndex === -1) {
+    return `..${name.slice(-10)}`;
+  }
+  const nameWithoutExtension = name.slice(0, dotIndex);
+  const extension = name.slice(dotIndex);
+  const shortName = nameWithoutExtension.slice(-10);
+  return `..${shortName}${extension}`;
+}
+
+const handleViewImage = async (item) => {
+  try {
+    const response = await viewImage(tempLocation.at(0), tempLocation.slice(1).join('/'), item.name);
+    const blob = new Blob([response.data], { type: response.headers['content-type'] });
+    const url = window.URL.createObjectURL(blob);
+    previewImage.value = url;
+  } catch (error) {
+    console.error('Error viewing image:', error);
+  }
+};
+
+const closePreview = () => {
+  window.URL.revokeObjectURL(previewImage.value);
+  previewImage.value = null;
+};
+
 const submitHandler = () => {
   // Handle form submission if needed
 }
+
+console.log(userRole.value)
 </script>
 
 <template>
@@ -312,10 +374,10 @@ const submitHandler = () => {
           <input v-model="annotationForm.year" type="number" placeholder="*" />
           <label>Description</label>
           <input v-model="annotationForm.description" type="text" placeholder="*" />
-          <label>Scanner Folder Location</label>
+          <!-- <label>Scanner Folder Location</label>
           <input v-model="annotationForm.scanner_folder_location" type="text" placeholder="*" />
           <label>Redactor Folder Location</label>
-          <input v-model="annotationForm.redactor_folder_location" type="text" placeholder="*" />
+          <input v-model="annotationForm.redactor_folder_location" type="text" placeholder="*" /> -->
         </div>
       </template>
       <template #footer>
@@ -337,20 +399,20 @@ const submitHandler = () => {
       <template #content>
         <div style="display: flex; flex-direction: column; flex-wrap: wrap; gap: 12px">
           <label>Folder no</label>
-          <input v-model="annotationForm.folder_no" type="text" placeholder="*" />
-          <label>Year</label>
-          <input v-model="annotationForm.year" type="number" placeholder="*" />
+          <input v-model="annotationForm.folder_no" type="text" placeholder="*" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}">
+          <label>Year</label> 
+          <input v-model="annotationForm.year" type="number" placeholder="*" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
           <label>Description</label>
-          <input v-model="annotationForm.description" type="text" placeholder="*" />
-          <label>Scanner Folder Location</label>
+          <input v-model="annotationForm.description" type="text" placeholder="*" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
+          <!-- <label>Scanner Folder Location</label>
           <input v-model="annotationForm.scanner_folder_location" type="text" placeholder="*" />
           <label>Redactor Folder Location</label>
-          <input v-model="annotationForm.redactor_folder_location" type="text" placeholder="*" />
+          <input v-model="annotationForm.redactor_folder_location" type="text" placeholder="*" /> -->
         </div>
       </template>
       <template #footer>
         <div style="display: flex; justify-content: end; align-items: end">
-          <button class="button-30" role="button" @click="runEdit">Edit Folder Annotation</button>
+          <button v-if="userRole == 2" class="button-30" role="button" @click="runEdit">Edit Folder Annotation</button>
         </div>
       </template>
     </Modal>
@@ -367,23 +429,23 @@ const submitHandler = () => {
       <template #content>
         <div style="display: flex; flex-direction: column; flex-wrap: wrap; gap: 12px">
           <label>Case No</label>
-          <input v-model="annotationFormCase.case_no" type="text" placeholder="*" required />
+          <input v-model="annotationFormCase.case_no" type="text" placeholder="*" required :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
           <label>IP Case</label>
-          <input v-model="annotationFormCase.ip_case" type="text" placeholder="Optional" />
+          <input v-model="annotationFormCase.ip_case" type="text" placeholder="Optional" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
           <label>IP Object Type</label>
-          <input v-model="annotationFormCase.ip_object_type" type="text" placeholder="Optional" />
+          <input v-model="annotationFormCase.ip_object_type" type="text" placeholder="Optional" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
           <label>IP Case Name</label>
-          <input v-model="annotationFormCase.ip_case_name" type="text" placeholder="Optional" />
+          <input v-model="annotationFormCase.ip_case_name" type="text" placeholder="Optional" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
           <label>IP Author</label>
-          <input v-model="annotationFormCase.ip_author" type="text" placeholder="Optional" />
+          <input v-model="annotationFormCase.ip_author" type="text" placeholder="Optional" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
           <label>IP Applicant</label>
-          <input v-model="annotationFormCase.ip_applicant" type="text" placeholder="Optional" />
+          <input v-model="annotationFormCase.ip_applicant" type="text" placeholder="Optional" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
           <label>IP Classes</label>
-          <input v-model="annotationFormCase.ip_classes" type="text" placeholder="Optional" />
-          <label>Page Start</label>
+          <input v-model="annotationFormCase.ip_classes" type="text" placeholder="Optional" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
+          <!-- <label>Page Start</label>
           <input v-model="annotationFormCase.page_start" type="text" placeholder="*" required />
           <label>Page End</label>
-          <input v-model="annotationFormCase.page_end" type="text" placeholder="*" required />
+          <input v-model="annotationFormCase.page_end" type="text" placeholder="*" required /> -->
         </div>
       </template>
       <template #footer>
@@ -408,9 +470,9 @@ const submitHandler = () => {
           <div>
             <span><strong>Case No:</strong> {{ caseItem.case_no }}</span><br>
           </div>
-          <button class="button-30" role="button" @click="openEditCaseModal(caseItem.id)">Edit Case Annotation</button>
+          <button class="button-30" role="button" @click="openEditCaseModal(caseItem.id)">{{ userRole !=2 ? 'View Case Annotation' : 'Edit Case Annotation' }}</button>
           
-          <button v-if="userRole == 2" class="button-30" role="button" @click="openReturnCaseModal(caseItem.id)">Return Case</button>
+          <!-- <button v-if="userRole == 2" class="button-30" role="button" @click="openReturnCaseModal(caseItem.id)">Return Case</button> -->
         </div>
       </div>
     </template>
@@ -457,28 +519,28 @@ const submitHandler = () => {
     <template #content>
       <div style="display: flex; flex-direction: column; gap: 12px">
         <label>Case No</label>
-        <input v-model="annotationFormCase.case_no" type="text" placeholder="*" required />
+        <input v-model="annotationFormCase.case_no" type="text" placeholder="*" required :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
         <label>IP Case</label>
-        <input v-model="annotationFormCase.ip_case" type="text" placeholder="Optional" />
+        <input v-model="annotationFormCase.ip_case" type="text" placeholder="Optional" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
         <label>IP Object Type</label>
-        <input v-model="annotationFormCase.ip_object_type" type="text" placeholder="Optional" />
+        <input v-model="annotationFormCase.ip_object_type" type="text" placeholder="Optional" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
         <label>IP Case Name</label>
-        <input v-model="annotationFormCase.ip_case_name" type="text" placeholder="Optional" />
+        <input v-model="annotationFormCase.ip_case_name" type="text" placeholder="Optional" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
         <label>IP Author</label>
-        <input v-model="annotationFormCase.ip_author" type="text" placeholder="Optional" />
+        <input v-model="annotationFormCase.ip_author" type="text" placeholder="Optional" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
         <label>IP Applicant</label>
-        <input v-model="annotationFormCase.ip_applicant" type="text" placeholder="Optional" />
+        <input v-model="annotationFormCase.ip_applicant" type="text" placeholder="Optional" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
         <label>IP Classes</label>
-        <input v-model="annotationFormCase.ip_classes" type="text" placeholder="Optional" />
-        <label>Page Start</label>
+        <input v-model="annotationFormCase.ip_classes" type="text" placeholder="Optional" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
+        <!-- <label>Page Start</label>
         <input v-model="annotationFormCase.page_start" type="text" placeholder="*" required />
         <label>Page End</label>
-        <input v-model="annotationFormCase.page_end" type="text" placeholder="*" required />
+        <input v-model="annotationFormCase.page_end" type="text" placeholder="*" required /> -->
       </div>
     </template>
     <template #footer>
       <div style="display: flex; justify-content: end; align-items: end">
-        <button class="button-30" role="button" @click="runEditCase">Edit Case Annotation</button>
+        <button v-if="userRole ==2" class="button-30" role="button" @click="runEditCase">Edit Case Annotation</button>
       </div>
     </template>
   </Modal>
@@ -495,24 +557,24 @@ const submitHandler = () => {
     <template #content>
       <div style="display: flex; flex-direction: column; gap: 12px">
         <label>Case No</label>
-        <input v-model="annotationFormCase.case_no" type="text" placeholder="*" required />
+        <input v-model="annotationFormCase.case_no" type="text" placeholder="*" required :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
         <label>IP Case</label>
-        <input v-model="annotationFormCase.ip_case" type="text" placeholder="Optional" />
+        <input v-model="annotationFormCase.ip_case" type="text" placeholder="Optional" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
         <label>IP Object Type</label>
-        <input v-model="annotationFormCase.ip_object_type" type="text" placeholder="Optional" />
+        <input v-model="annotationFormCase.ip_object_type" type="text" placeholder="Optional" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
         <label>IP Case Name</label>
-        <input v-model="annotationFormCase.ip_case_name" type="text" placeholder="Optional" />
+        <input v-model="annotationFormCase.ip_case_name" type="text" placeholder="Optional" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
         <label>IP Author</label>
-        <input v-model="annotationFormCase.ip_author" type="text" placeholder="Optional" />
+        <input v-model="annotationFormCase.ip_author" type="text" placeholder="Optional" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
         <label>IP Applicant</label>
-        <input v-model="annotationFormCase.ip_applicant" type="text" placeholder="Optional" />
+        <input v-model="annotationFormCase.ip_applicant" type="text" placeholder="Optional" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
         <label>IP Classes</label>
-        <input v-model="annotationFormCase.ip_classes" type="text" placeholder="Optional" />
+        <input v-model="annotationFormCase.ip_classes" type="text" placeholder="Optional" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
       </div>
     </template>
     <template #footer>
       <div style="display: flex; justify-content: end; align-items: end">
-        <button class="button-30" role="button" @click="runCorrectCase">Edit Case Annotation</button>
+        <button v-if="userRole ==2" class="button-30" role="button" @click="runCorrectCase">Edit Case Annotation</button>
       </div>
     </template>
   </Modal>
@@ -530,6 +592,21 @@ const submitHandler = () => {
       <template #footer>
         <button @click="confirmPublish">Yes</button>
         <button @click="cancelPublish">No</button>
+      </template>
+    </Modal>
+
+    <Modal
+      :isOpen="isSendFolderModalOpened"
+      name="edit-case-Modal" v-if="isSendFolderModalOpened" @close="cancelSend">
+      <template #header>
+        <h3>Confirm Send</h3>
+      </template>
+      <template #body>
+        <p>Are you sure you want to send this folder to redactor?</p>
+      </template>
+      <template #footer>
+        <button @click="confirmSendFolder">Yes</button>
+        <button @click="cancelSend">No</button>
       </template>
     </Modal>
 
@@ -553,19 +630,28 @@ const submitHandler = () => {
       @click="active = item.name"
       @dblclick="changeLocation({ name: item.name, format: item.format })"
     >
+    <template v-if="item.format !== 'db'">
       <img
         :src="item.format === 'Folder' ? folder : item.format === 'db' ? db : image"
         alt="folder"
       />
       <p style="font-weight: 500">
-        {{ item.name.length < 12 ? item.name : `${item?.name.slice(0, 10)}..` }}
+        {{ displayFileName(item.name) }}
       </p>
       <div v-if="active === item.name" class="moreAction">
         <p
           class="singleText"
           style="font-size: 14px; font-weight: 300"
-          v-if="item.format === 'jpg'"
-          @click="ss"
+         
+         @click="handleDownload(item.name)"
+        >
+        Download
+        </p>
+        <p
+          class="singleText"
+          style="font-size: 14px; font-weight: 300"
+          v-if="item.format !== 'Folder'"
+          @click="handleViewImage(item)"
         >
           Preview
         </p>
@@ -584,18 +670,18 @@ const submitHandler = () => {
             v-else-if="item.is_annotated"
             @click="openEditModal(item.is_annotated)"
           >
-            Edit Annotation
+            {{ userRole !=2 ? 'View Annotation' : 'Edit Annotation' }}
           </p>
         </div>
         <div>
-          <p
+          <!-- <p
             class="singleText"
             style="font-size: 14px; font-weight: 300"
             v-if="item.is_annotated > 0 && userRole == 1"
             @click="openCreateCaseModal(item)"
           >
             Add Case Annotation
-          </p>
+          </p> -->
           <p
             class="singleText"
             style="font-size: 14px; font-weight: 300"
@@ -620,6 +706,14 @@ const submitHandler = () => {
           >
             Correct Case Annotation
           </p>
+          <p
+            class="singleText"
+            style="font-size: 14px; font-weight: 300"
+            v-if="item.is_annotated && userRole == 1 && item.format === 'Folder'"
+            @click="openSendFolderModal(item.is_annotated)"
+          >
+            Send Folder
+          </p>
         </div>
         <div>
            <p
@@ -632,7 +726,13 @@ const submitHandler = () => {
           </p>
         </div>
       </div>
+    </template>
     </div>
+    <div v-if="previewImage" class="image-preview">
+      <img :src="previewImage" alt="Preview" />
+      <button class="button-30" @click="closePreview">Close</button>
+    </div>
+  
   </div>
 </template>
 
@@ -650,11 +750,17 @@ const submitHandler = () => {
 
 .moreAction {
   position: absolute;
-  top: 147px;
+  top: 135px;
   text-align: start;
-  background-color: rgba(255, 255, 255, 0.8);
+  background-color: rgba(255, 255, 255, 1);
   width: 130px;
   border-radius: 4px;
+  z-index: 999;
+  /* border: 1px solid rgb(214, 214, 214); */
+  box-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.1),
+    0 8px 16px rgba(0, 0, 0, 0.2),
+    0 12px 40px rgba(38, 38, 41, 0.3);
 }
 .singleText {
   padding: 4px 8px;

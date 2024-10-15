@@ -15,9 +15,14 @@ const router = createRouter({
       component: () => import('../views/DisplayContent.vue')
     },
     {
-      path: '/',
+      path: '/catalog',
       name: 'catalog',
       component: () => import('../views/DisplayCatalog.vue')
+    },
+    {
+      path: '/initial',
+      name: 'initial',
+      component: () => import('../views/DisplayInitial.vue')
     },
   ]
 })
