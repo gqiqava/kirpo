@@ -29,6 +29,7 @@ const annotationForm = ref({
   folder_no: null,
   year: null,
   description: null,
+  inscription: null,
   scanner_folder_location: null,
   redactor_folder_location: null,
   initial_folder_location: null
@@ -217,16 +218,18 @@ const submitHandler = () => {
       name="Edit-Modal"
     >
       <template #header>
-        <h3 style="width: 100%; text-align: center">{{ active }}</h3>
+        <h3 style="width: 100%; text-align: center">{{ annotationForm.inscription }} _ {{ active }}</h3>
       </template>
       <template #content>
         <div style="display: flex; flex-direction: column; flex-wrap: wrap; gap: 12px">
-          <label>Folder no</label>
+          <label>საქმის ნომერი</label>
           <input v-model="annotationForm.folder_no" type="text" placeholder="*" />
-          <label>Year</label>
+          <label>წელი</label>
           <input v-model="annotationForm.year" type="number" placeholder="*" />
-          <label>Description</label>
+          <label>აღწერა</label>
           <input v-model="annotationForm.description" type="text" placeholder="*" />
+          <label>ანაწერის ნომერი</label>
+          <input v-model="annotationForm.inscription" type="text" placeholder="*" />
           <!-- <label>Scanner Folder Location</label>
           <input v-model="annotationForm.scanner_folder_location" type="text" placeholder="*" />
           <label>Redactor Folder Location</label>
@@ -235,7 +238,7 @@ const submitHandler = () => {
       </template>
       <template #footer>
         <div style="display: flex; justify-content: end; align-items: end">
-          <button class="button-30" role="button" @click="runEdit">Edit Folder Annotation</button>
+          <button class="button-30" role="button" @click="runEdit">შეცვალეთ საქმის ანოტაცია</button>
         </div>
       </template>
     </Modal>
@@ -247,21 +250,21 @@ const submitHandler = () => {
     name="view-cases-Modal"
   >
     <template #header>
-      <h3 style="width: 100%; text-align: center">Cases in {{ active }}</h3>
+      <h3 style="width: 100%; text-align: center">განაცხადები საქმე N{{ active }}-ში</h3>
     </template>
     <template #content>
       <div style="display: flex; flex-direction: column; gap: 12px">
         <div v-for="caseItem in cases.data" :key="caseItem.id" style="display: flex; justify-content: space-between; align-items: center;">
           <div>
-            <span><strong>Case No:</strong> {{ caseItem.case_no }}</span><br>
+            <span><strong>განაცხადის ნომერი:</strong> {{ caseItem.case_no }}</span><br>
           </div>
-          <button class="button-30" role="button" @click="openEditCaseModal(caseItem.id)">Edit Case Annotation</button>
+          <button class="button-30" role="button" @click="openEditCaseModal(caseItem.id)">შეცვალეთ განაცხადის ანოტაცია</button>
         </div>
       </div>
     </template>
     <template #footer>
         <div style="display: flex; justify-content: end; align-items: end">
-          <button class="button-30" role="button" @click="closeViewCasesModal">Close</button>
+          <button class="button-30" role="button" @click="closeViewCasesModal">დახურვა</button>
         </div>
       </template>
   </Modal>
@@ -273,23 +276,23 @@ const submitHandler = () => {
     name="edit-case-Modal"
   >
     <template #header>
-      <h3 style="width: 100%; text-align: center">Edit Case Annotation</h3>
+      <h3 style="width: 100%; text-align: center">შეცვალეთ განაცხადის ანოტაცია</h3>
     </template>
     <template #content>
       <div style="display: flex; flex-direction: column; gap: 12px">
-        <label>Case No</label>
+        <label>განაცხადის ნომერი</label>
         <input v-model="annotationFormCase.case_no" type="text" placeholder="*" required />
-        <label>IP Case</label>
+        <label>განცხადების ნომერი(საქმის ნომერი)</label>
         <input v-model="annotationFormCase.ip_case" type="text" placeholder="Optional" />
-        <label>IP Object Type</label>
+        <label>ინტელექტუალური საკუთრების ობიექტი</label>
         <input v-model="annotationFormCase.ip_object_type" type="text" placeholder="Optional" />
-        <label>IP Case Name</label>
+        <label>ინტელექტუალური საკუთრების ობიექტის დასახელება</label>
         <input v-model="annotationFormCase.ip_case_name" type="text" placeholder="Optional" />
-        <label>IP Author</label>
+        <label>ინტელექტუალური საკუთრების ობიექტის ავტორი</label>
         <input v-model="annotationFormCase.ip_author" type="text" placeholder="Optional" />
-        <label>IP Applicant</label>
+        <label>ინტელექტუალური საკუთრების ობიექტის განმცხადებელი</label>
         <input v-model="annotationFormCase.ip_applicant" type="text" placeholder="Optional" />
-        <label>IP Classes</label>
+        <label>ინტელექტუალური საკუთრების ობიექტის კლასები</label>
         <input v-model="annotationFormCase.ip_classes" type="text" placeholder="Optional" />
         <!-- <label>Page Start</label>
         <input v-model="annotationFormCase.page_start" type="text" placeholder="*" required />
@@ -299,7 +302,7 @@ const submitHandler = () => {
     </template>
     <template #footer>
       <div style="display: flex; justify-content: end; align-items: end">
-        <button class="button-30" role="button" @click="runEditCase">Edit Case Annotation</button>
+        <button class="button-30" role="button" @click="runEditCase">შეცვალეთ განაცხადის ანოტაცია</button>
       </div>
     </template>
   </Modal>
@@ -310,20 +313,19 @@ const submitHandler = () => {
     name="send-folder-modal"
   >
     <template #header>
-      <h3 style="width: 100%; text-align: center">Send Folder</h3>
+      <h3 style="width: 100%; text-align: center">საქმის განაწილება</h3>
     </template>
     <template #content>
-      <p>Are you sure you want to send this folder?</p>
-      <p>Folder ID: {{ folderToSend }}</p>
+      <p>გსურთ საქმე N{{ active }} გაანაწილოთ?</p>
       <div>
-        <p>Choose a user to send the folder to:</p>
+        <p>აირჩიეთ დამსკანერებელი მომხმარებელი:</p>
         <button class="button-30" role="button" @click="sendToUser1">Eka Lobzhanidze(ID: 2)</button>
         <button class="button-30" role="button" @click="sendToUser2">Mtvarisa Liparteliani(ID: 5)</button>
       </div>
     </template>
     <template #footer>
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <button class="button-30" role="button" @click="isSendFolderModalOpened = false">Cancel</button>
+      <div style="display: flex; justify-content: end; align-items: end;">
+        <button class="button-30" role="button" @click="isSendFolderModalOpened = false">დახურვა</button>
       </div>
     </template>
   </Modal>
@@ -350,7 +352,7 @@ const submitHandler = () => {
         
            @click="handleDownload(item.name)"
           >
-            Download
+            გადმოწერა
           </p>
         <p
           class="singleText:hover"
@@ -358,7 +360,7 @@ const submitHandler = () => {
           v-if="item.format !== 'Folder'"
           @click="handleViewImage(item)"
         >
-          Preview
+          ნახვა
         </p>
         <div>
           <p
@@ -367,7 +369,7 @@ const submitHandler = () => {
             v-if="item.is_annotated"
             @click="openEditModal(item.is_annotated)"
           >
-            Edit Annotation
+            ანაწერის ცვლილება
           </p>
         </div>
         <div>
@@ -377,7 +379,7 @@ const submitHandler = () => {
             v-if="item.is_annotated > 0"
             @click="openCasesModal(item)"
           >
-            View Cases
+            განაცხადების ნახვა
           </p>
           <p
             class="singleText"
@@ -385,7 +387,7 @@ const submitHandler = () => {
             v-if="item.is_annotated && userRole == 3 && item.format === 'Folder'"
             @click="openSendFolderModal(item.is_annotated)"
           >
-            Send Folder
+            საქმის განაწილება
           </p>
         </div>
       </div>
