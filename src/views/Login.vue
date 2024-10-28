@@ -34,9 +34,9 @@ const loginUser = async () => {
     location.reload()
   }, 100);
   if(resposne.role_id == 1) router.push('/content')
-  if(resposne.role_id == 2) router.push('/content')
-  if(resposne.role_id == 3) router.push('/initial')
-  
+  else if(resposne.role_id == 2) router.push('/content')
+  else if(resposne.role_id == 3) router.push('/initial')
+  else router.push('/catalog')
 }
 </script>
 <template>

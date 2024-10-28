@@ -179,15 +179,27 @@ export const sendFolder = (id) => {
 return resp
 }
 
-export const returnCase = async (val) => {
+export const returnFolder = async (val) => {
   try {
-    const response = await AxiosInst.post('return-case/', val);
+    const response = await AxiosInst.post('return-folder/', val);
     return response.data;
   } catch (error) {
-    console.error('Error returning case:', error);
+    console.error('Error returning folder:', error);
     throw error;
   }
 }
+
+
+//Scanner List
+export const scannerList = async () => {
+  try {
+    const response = await AxiosInst.post('scanner-list/');
+    return response;
+  } catch (error) {
+    console.error('Error getting scanners', error);
+    throw error;
+  }
+};
 
 // Description APIs
 

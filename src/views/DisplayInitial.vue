@@ -7,6 +7,7 @@ import {
   getCaseAnnotation,
   editCaseAnnotation,
   sendFolderToScanner,
+  scannerList,
   viewImage, 
   //Download file
   downloadFile
@@ -48,7 +49,6 @@ const annotationFormCase = ref({
 })
 const cases = ref([]) // New ref for storing cases
 const isSendFolderModalOpened = ref(false); // New ref for controlling the publish modal visibility
-const folderToSend = ref(null); // New ref for storing the folder to be publishe
 
 const { location, folderLoc } = storeToRefs(store)
 
@@ -142,31 +142,50 @@ const closeEditCaseModal = () => {
   currentCaseId.value = null
 }
 
-const openSendFolderModal = (id) => {
-  folderToSend.value = id;
-  isSendFolderModalOpened.value = true;
+const selectedFolderId = ref(null) // New ref for storing the selected folder ID for send
+const isSendFolderModalOpen = ref(false); // New ref for controlling the send folder modal visibility
+const selectedUserId = ref(null); // New ref for storing the selected user ID
+
+const openSendFolderModal = async (id) => {
+  selectedFolderId.value = id;
+  isSendFolderModalOpen.value = true;
 };
 
-const sendFolder = async (userId) => {
+// Fetch the scanner list data
+const scannerData = ref([]);
+const fetchScannerList = async () => {
   try {
-    const response = await sendFolderToScanner({
-      scanner_folder_annotation_id: folderToSend.value,
-      user_id: userId
-    })
-    console.log('Folder sent successfully', response)
-    isSendFolderModalOpened.value = false // Close the modal
+    const response = await scannerList();
+    scannerData.value = response.data;
   } catch (error) {
-    console.error('Error sending folder:', error)
+    console.error('Error fetching scanner list:', error);
   }
-}
+};
 
-const sendToUser1 = () => {
-  sendFolder(2) // Send to user with ID 2
-}
+fetchScannerList();
 
-const sendToUser2 = () => {
-  sendFolder(5) // Send to user with ID 4
-}
+const closeSendFolderModal = () => {
+  selectedFolderId.value = null;
+  isSendFolderModalOpen.value = false;
+};
+
+const submitSendFolder = async () => {
+  if (selectedFolderId.value !== '' && selectedUserId.value) {
+    try {
+      const response = await sendFolderToScanner({
+        scanner_folder_annotation_id: selectedFolderId.value,
+        user_id: selectedUserId.value,
+      });
+      console.log('Folder sent successfully:', response.data);
+      closeSendFolderModal();
+      // Optionally refresh the folder list or emit an event
+    } catch (error) {
+      console.error('Error sending folder:', error);
+    }
+  } else {
+    alert('Please select a user');
+  }
+};
 
 const runEditCase = () => {
   console.log(annotationFormCase)
@@ -308,6 +327,33 @@ const submitHandler = () => {
   </Modal>
 
   <Modal
+    :isOpen="isSendFolderModalOpen"
+    @modal-close="closeSendFolderModal"
+    @submit="submitSendnFolder"
+    name="send-folder-modal"
+  >
+    <template #header>
+      <h3>Send Folder</h3>
+    </template>
+    <template #content>
+      <div style="display: flex; flex-direction: column; gap: 12px">
+        <p>გსურთ საქმე N{{ active }} გაანაწილოთ?</p>
+        <label><strong>აირჩიეთ დამსკანერებელი მომხმარებელი:</strong></label>
+        <select v-model="selectedUserId">
+          <option value="" disabled>აირჩიეთ დამსკანერებელი მომხმარებელი</option>
+          <option v-for="scanner in scannerData" :key="scanner.id" :value="scanner.id">{{ scanner.first_name }} {{ scanner.last_name }}</option>
+        </select>
+      </div>
+    </template>
+    <template #footer>
+      <div style="display: flex; justify-content: end; align-items: end">
+        <button class="button-30" role="button" @click="closeSendFolderModal">დახურვა</button>
+        <button class="button-30" role="button" @click="submitSendFolder">გადაგზავნა</button>
+      </div>
+    </template>
+  </Modal>
+
+  <Modal
     :isOpen="isSendFolderModalOpened"
     @modal-close="isSendFolderModalOpened = false"
     name="send-folder-modal"
@@ -316,12 +362,7 @@ const submitHandler = () => {
       <h3 style="width: 100%; text-align: center">საქმის განაწილება</h3>
     </template>
     <template #content>
-      <p>გსურთ საქმე N{{ active }} გაანაწილოთ?</p>
-      <div>
-        <p>აირჩიეთ დამსკანერებელი მომხმარებელი:</p>
-        <button class="button-30" role="button" @click="sendToUser1">Eka Lobzhanidze(ID: 2)</button>
-        <button class="button-30" role="button" @click="sendToUser2">Mtvarisa Liparteliani(ID: 5)</button>
-      </div>
+      
     </template>
     <template #footer>
       <div style="display: flex; justify-content: end; align-items: end;">

@@ -17,8 +17,10 @@ import {
   viewImage, // Import the correct API function
   //Publish folder in catalog API
   publishCatalog,
+  //Scanner list
+  scannerList,
   //Return case API
-  returnCase,
+  returnFolder,
   //Download file
   downloadFile,
   sendFolder
@@ -64,10 +66,6 @@ const folderToPublish = ref(null); // New ref for storing the folder to be publi
 const sendFolderMessage = ref(''); // New ref for storing the publish message
 const isSendFolderModalOpened = ref(false); // New ref for controlling the publish modal visibility
 const folderToSend = ref(null); // New ref for storing the folder to be publishe
-
-const returnMessage = ref(''); // New ref for storing the return message
-const isReturnCaseModalOpen = ref(false); // New ref for controlling the return case modal visibility
-const selectedCaseId = ref(null); // New ref for storing the selected case ID for return
 
 const { location, folderLoc } = storeToRefs(store)
 
@@ -294,27 +292,51 @@ const closeCorrectCaseModal = () => {
   currentCaseId.value = null
 }
 
-const closeReturnCaseModal = () => {
-  selectedCaseId.value = null;
-  returnMessage.value = '';
-  isReturnCaseModalOpen.value = false;
+const selectedFolderId = ref(null) // New ref for storing the selected folder ID for return
+const returnMessage = ref(''); // New ref for storing the return message
+const isReturnFolderModalOpen = ref(false); // New ref for controlling the return folder modal visibility
+const selectedUserId = ref(null); // New ref for storing the selected user ID
+
+const openReturnFolderModal = async (id) => {
+  selectedFolderId.value = id;
+  isReturnFolderModalOpen.value = true;
 };
 
-const submitReturnCase = async () => {
-  if (selectedCaseId.value && returnMessage.value.trim() !== '') {
+// Fetch the scanner list data
+const scannerData = ref([]);
+const fetchScannerList = async () => {
+  try {
+    const response = await scannerList();
+    scannerData.value = response.data;
+  } catch (error) {
+    console.error('Error fetching scanner list:', error);
+  }
+};
+
+fetchScannerList();
+
+const closeReturnFolderModal = () => {
+  selectedFolderId.value = null;
+  returnMessage.value = '';
+  isReturnFolderModalOpen.value = false;
+};
+
+const submitReturnFolder = async () => {
+  if (selectedFolderId.value && returnMessage.value.trim() !== '' && selectedUserId.value) {
     try {
-      const response = await returnCase({
-        case_id: selectedCaseId.value,
+      const response = await returnFolder({
+        redactor_folder_annotation_id: selectedFolderId.value,
         message: returnMessage.value,
+        user_id: selectedUserId.value,
       });
-      console.log('Case returned successfully:', response.data);
-      closeReturnCaseModal();
-      // Optionally refresh the cases list or emit an event
+      console.log('Folder returned successfully:', response.data);
+      closeReturnFolderModal();
+      // Optionally refresh the folder list or emit an event
     } catch (error) {
-      console.error('Error returning case:', error);
+      console.error('Error returning folder:', error);
     }
   } else {
-    alert('Please enter a message.');
+    alert('Please select a user and enter a message.');
   }
 };
 
@@ -324,11 +346,11 @@ const displayFileName = (name) => {
   }
   const dotIndex = name.lastIndexOf('.');
   if (dotIndex === -1) {
-    return `..${name.slice(-10)}`;
+    return `${name.slice()}`;
   }
   const nameWithoutExtension = name.slice(0, dotIndex);
   const extension = name.slice(dotIndex);
-  const shortName = nameWithoutExtension.slice(-10);
+  const shortName = nameWithoutExtension.slice();
   return `..${shortName}${extension}`;
 }
 
@@ -368,11 +390,11 @@ console.log(userRole.value)
       </template>
       <template #content>
         <div style="display: flex; flex-direction: column; flex-wrap: wrap; gap: 12px">
-          <label>Folder no</label>
+          <label>საქმის ნომერი</label>
           <input v-model="annotationForm.folder_no" type="text" placeholder="*" />
-          <label>Year</label>
+          <label>წელი</label>
           <input v-model="annotationForm.year" type="number" placeholder="*" />
-          <label>Description</label>
+          <label>აღწერა</label>
           <input v-model="annotationForm.description" type="text" placeholder="*" />
           <!-- <label>Scanner Folder Location</label>
           <input v-model="annotationForm.scanner_folder_location" type="text" placeholder="*" />
@@ -398,11 +420,11 @@ console.log(userRole.value)
       </template>
       <template #content>
         <div style="display: flex; flex-direction: column; flex-wrap: wrap; gap: 12px">
-          <label>Folder no</label>
+          <label>საქმის ნომერი</label>
           <input v-model="annotationForm.folder_no" type="text" placeholder="*" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}">
-          <label>Year</label> 
+          <label>წელი</label> 
           <input v-model="annotationForm.year" type="number" placeholder="*" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
-          <label>Description</label>
+          <label>აღწერა</label>
           <input v-model="annotationForm.description" type="text" placeholder="*" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
           <!-- <label>Scanner Folder Location</label>
           <input v-model="annotationForm.scanner_folder_location" type="text" placeholder="*" />
@@ -412,7 +434,7 @@ console.log(userRole.value)
       </template>
       <template #footer>
         <div style="display: flex; justify-content: end; align-items: end">
-          <button v-if="userRole == 2" class="button-30" role="button" @click="runEdit">Edit Folder Annotation</button>
+          <button v-if="userRole == 2" class="button-30" role="button" @click="runEdit">შეცვალეთ საქმის ანოტაცია</button>
         </div>
       </template>
     </Modal>
@@ -428,19 +450,19 @@ console.log(userRole.value)
       </template>
       <template #content>
         <div style="display: flex; flex-direction: column; flex-wrap: wrap; gap: 12px">
-          <label>Case No</label>
+          <label>განაცხადის ნომერი</label>
           <input v-model="annotationFormCase.case_no" type="text" placeholder="*" required :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
-          <label>IP Case</label>
+          <label>განცხადების ნომერი(საქმის ნომერი)</label>
           <input v-model="annotationFormCase.ip_case" type="text" placeholder="Optional" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
-          <label>IP Object Type</label>
+          <label>ინტელექტუალური საკუთრების ობიექტი</label>
           <input v-model="annotationFormCase.ip_object_type" type="text" placeholder="Optional" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
-          <label>IP Case Name</label>
+          <label>ინტელექტუალური საკუთრების ობიექტის დასახელება</label>
           <input v-model="annotationFormCase.ip_case_name" type="text" placeholder="Optional" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
-          <label>IP Author</label>
+          <label>ინტელექტუალური საკუთრების ობიექტის ავტორი</label>
           <input v-model="annotationFormCase.ip_author" type="text" placeholder="Optional" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
-          <label>IP Applicant</label>
+          <label>ინტელექტუალური საკუთრების ობიექტის განმცხადებელი</label>
           <input v-model="annotationFormCase.ip_applicant" type="text" placeholder="Optional" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
-          <label>IP Classes</label>
+          <label>ინტელექტუალური საკუთრების ობიექტის კლასები</label>
           <input v-model="annotationFormCase.ip_classes" type="text" placeholder="Optional" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
           <!-- <label>Page Start</label>
           <input v-model="annotationFormCase.page_start" type="text" placeholder="*" required />
@@ -468,9 +490,9 @@ console.log(userRole.value)
       <div style="display: flex; flex-direction: column; gap: 12px">
         <div v-for="caseItem in cases.data" :key="caseItem.id" style="display: flex; justify-content: space-between; align-items: center;">
           <div>
-            <span><strong>Case No:</strong> {{ caseItem.case_no }}</span><br>
+            <span><strong>განაცხადის ნომერი:</strong> {{ caseItem.case_no }}</span><br>
           </div>
-          <button class="button-30" role="button" @click="openEditCaseModal(caseItem.id)">{{ userRole !=2 ? 'View Case Annotation' : 'Edit Case Annotation' }}</button>
+          <button class="button-30" role="button" @click="openEditCaseModal(caseItem.id)">{{ userRole !=2 ? 'განაცხადის ანოტაციის ნახვა' : 'განაცხადის ანოტაციის ცვლილება' }}</button>
           
           <!-- <button v-if="userRole == 2" class="button-30" role="button" @click="openReturnCaseModal(caseItem.id)">Return Case</button> -->
         </div>
@@ -478,31 +500,35 @@ console.log(userRole.value)
     </template>
     <template #footer>
         <div style="display: flex; justify-content: end; align-items: end">
-          <button class="button-30" role="button" @click="closeViewCasesModal">Close</button>
+          <button class="button-30" role="button" @click="closeViewCasesModal">დახურვა</button>
         </div>
       </template>
   </Modal>
 
-  <!-- Return Case Modal -->
   <Modal
-    :isOpen="isReturnCaseModalOpen"
-    @modal-close="closeReturnCaseModal"
-    @submit="submitReturnCase"
-    name="return-case-modal"
+    :isOpen="isReturnFolderModalOpen"
+    @modal-close="closeReturnFolderModal"
+    @submit="submitReturnFolder"
+    name="return-folder-modal"
   >
     <template #header>
-      <h3 style="width: 100%; text-align: center">Return Case</h3>
+      <h3>საქმის დაბრუნება</h3>
     </template>
     <template #content>
       <div style="display: flex; flex-direction: column; gap: 12px">
-        <label for="returnMessage"><strong>Message:</strong></label>
+        <label for="returnMessage"><strong>შეტყობინება:</strong></label>
         <textarea v-model="returnMessage" id="returnMessage" rows="4" style="width: 100%;"></textarea>
+        <label><strong>აირჩიეთ დამსკანერებელი მომხმარებელი:</strong></label>
+        <select v-model="selectedUserId">
+          <option value="" disabled>აირჩიეთ დამსკანერებელი მომხმარებელი</option>
+          <option v-for="scanner in scannerData" :key="scanner.id" :value="scanner.id">{{ scanner.first_name }} {{ scanner.last_name }}</option>
+        </select>
       </div>
     </template>
     <template #footer>
       <div style="display: flex; justify-content: end; align-items: end">
-        <button class="button-30" role="button" @click="closeReturnCaseModal">Cancel</button>
-        <button class="button-30" role="button" @click="submitReturnCase">Submit</button>
+        <button class="button-30" role="button" @click="closeReturnFolderModal">დახურვა</button>
+        <button class="button-30" role="button" @click="submitReturnFolder">დაბრუნება</button>
       </div>
     </template>
   </Modal>
@@ -514,23 +540,23 @@ console.log(userRole.value)
     name="edit-case-Modal"
   >
     <template #header>
-      <h3 style="width: 100%; text-align: center">Edit Case Annotation</h3>
+      <h3 style="width: 100%; text-align: center">შეცვალეთ განაცხადის ანოტაცია</h3>
     </template>
     <template #content>
       <div style="display: flex; flex-direction: column; gap: 12px">
-        <label>Case No</label>
+        <label>განაცხადის ნომერი</label>
         <input v-model="annotationFormCase.case_no" type="text" placeholder="*" required :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
-        <label>IP Case</label>
+        <label>განცხადების ნომერი(საქმის ნომერი)</label>
         <input v-model="annotationFormCase.ip_case" type="text" placeholder="Optional" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
-        <label>IP Object Type</label>
+        <label>ინტელექტუალური საკუთრების ობიექტი</label>
         <input v-model="annotationFormCase.ip_object_type" type="text" placeholder="Optional" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
-        <label>IP Case Name</label>
+        <label>ინტელექტუალური საკუთრების ობიექტის დასახელება</label>
         <input v-model="annotationFormCase.ip_case_name" type="text" placeholder="Optional" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
-        <label>IP Author</label>
+        <label>ინტელექტუალური საკუთრების ობიექტის ავტორი</label>
         <input v-model="annotationFormCase.ip_author" type="text" placeholder="Optional" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
-        <label>IP Applicant</label>
+        <label>ინტელექტუალური საკუთრების ობიექტის განმცხადებელი</label>
         <input v-model="annotationFormCase.ip_applicant" type="text" placeholder="Optional" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
-        <label>IP Classes</label>
+        <label>ინტელექტუალური საკუთრების ობიექტის კლასები</label>
         <input v-model="annotationFormCase.ip_classes" type="text" placeholder="Optional" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
         <!-- <label>Page Start</label>
         <input v-model="annotationFormCase.page_start" type="text" placeholder="*" required />
@@ -540,7 +566,7 @@ console.log(userRole.value)
     </template>
     <template #footer>
       <div style="display: flex; justify-content: end; align-items: end">
-        <button v-if="userRole ==2" class="button-30" role="button" @click="runEditCase">Edit Case Annotation</button>
+        <button v-if="userRole ==2" class="button-30" role="button" @click="runEditCase">შეცვალეთ განაცხადის ანოტაცია</button>
       </div>
     </template>
   </Modal>
@@ -599,21 +625,21 @@ console.log(userRole.value)
       :isOpen="isSendFolderModalOpened"
       name="edit-case-Modal" v-if="isSendFolderModalOpened" @close="cancelSend">
       <template #header>
-        <h3>Confirm Send</h3>
+        <h3>გადაგზავნის დადასტურება</h3>
       </template>
       <template #body>
-        <p>Are you sure you want to send this folder to redactor?</p>
+        <p>დარწმუნებული ხართ, რომ გსურთ საქმის გადაგზავნა?</p>
       </template>
       <template #footer>
-        <button @click="confirmSendFolder">Yes</button>
-        <button @click="cancelSend">No</button>
+        <button class="button-30" @click="confirmSendFolder">დიახ</button>
+        <button class="button-30" @click="cancelSend">არა</button>
       </template>
     </Modal>
 
     <!-- Message Modal -->
     <Modal :isOpen="isMessageModalOpen" @modal-close="closeMessageModal" name="Message-Modal">
       <template #header>
-        <h3 style="width: 100%; text-align: center">Message</h3>
+        <h3 style="width: 100%; text-align: center">შეტყობინება</h3>
       </template>
       <template #content>
         <p>{{ currentMessage }}</p>
@@ -645,7 +671,7 @@ console.log(userRole.value)
          
          @click="handleDownload(item.name)"
         >
-        Download
+        გადმოწერა
         </p>
         <p
           class="singleText"
@@ -653,7 +679,7 @@ console.log(userRole.value)
           v-if="item.format !== 'Folder'"
           @click="handleViewImage(item)"
         >
-          Preview
+          ნახვა
         </p>
         <div>
           <p
@@ -670,7 +696,7 @@ console.log(userRole.value)
             v-else-if="item.is_annotated"
             @click="openEditModal(item.is_annotated)"
           >
-            {{ userRole !=2 ? 'View Annotation' : 'Edit Annotation' }}
+            {{ userRole !=2 ? 'ანოტაციის ნახვა' : 'ანოტაციის ცვლილება' }}
           </p>
         </div>
         <div>
@@ -688,7 +714,7 @@ console.log(userRole.value)
             v-if="item.is_annotated > 0"
             @click="openCasesModal(item)"
           >
-            View Cases
+            განაცხადების ნახვა
           </p>
           <p
             class="singleText"
@@ -696,7 +722,7 @@ console.log(userRole.value)
             v-if="item.returned"
             @click="showMessage(item.returned)"
           >
-            View Message
+            შეტყობინების ნახვა
           </p>
           <p
             class="singleText"
@@ -712,7 +738,15 @@ console.log(userRole.value)
             v-if="item.is_annotated && userRole == 1 && item.format === 'Folder'"
             @click="openSendFolderModal(item.is_annotated)"
           >
-            Send Folder
+            რედაქტორთან გადაგზავნა
+          </p>
+          <p
+            class="singleText"
+            style="font-size: 14px; font-weight: 300"
+            v-if="item.is_annotated && userRole == 2 && item.format === 'Folder'"
+            @click="openReturnFolderModal(item.is_annotated)"
+          >
+            საქმის დაბრუნება
           </p>
         </div>
         <div>
@@ -722,7 +756,7 @@ console.log(userRole.value)
             v-if="item.is_annotated && userRole == 2 && item.format === 'Folder'"
             @click="openPublishModal(item.is_annotated)"
           >
-            Publish Folder
+            საქმის გამოქვეყნება
           </p>
         </div>
       </div>
@@ -730,7 +764,7 @@ console.log(userRole.value)
     </div>
     <div v-if="previewImage" class="image-preview">
       <img :src="previewImage" alt="Preview" />
-      <button class="button-30" @click="closePreview">Close</button>
+      <button class="button-30" @click="closePreview">დახურვა</button>
     </div>
   
   </div>
