@@ -178,7 +178,7 @@ const submitSendFolder = async () => {
       });
       console.log('Folder sent successfully:', response.data);
       closeSendFolderModal();
-      // Optionally refresh the folder list or emit an event
+      // არასავალდებულოly refresh the folder list or emit an event
     } catch (error) {
       console.error('Error sending folder:', error);
     }
@@ -302,17 +302,19 @@ const submitHandler = () => {
         <label>განაცხადის ნომერი</label>
         <input v-model="annotationFormCase.case_no" type="text" placeholder="*" required />
         <label>განცხადების ნომერი(საქმის ნომერი)</label>
-        <input v-model="annotationFormCase.ip_case" type="text" placeholder="Optional" />
+        <input v-model="annotationFormCase.ip_case" type="text" placeholder="არასავალდებულო" />
         <label>ინტელექტუალური საკუთრების ობიექტი</label>
-        <input v-model="annotationFormCase.ip_object_type" type="text" placeholder="Optional" />
+        <input v-model="annotationFormCase.ip_object_type" type="text" placeholder="არასავალდებულო" />
         <label>ინტელექტუალური საკუთრების ობიექტის დასახელება</label>
-        <input v-model="annotationFormCase.ip_case_name" type="text" placeholder="Optional" />
+        <input v-model="annotationFormCase.ip_case_name" type="text" placeholder="არასავალდებულო" />
         <label>ინტელექტუალური საკუთრების ობიექტის ავტორი</label>
-        <input v-model="annotationFormCase.ip_author" type="text" placeholder="Optional" />
+        <input v-model="annotationFormCase.ip_author" type="text" placeholder="არასავალდებულო" />
         <label>ინტელექტუალური საკუთრების ობიექტის განმცხადებელი</label>
-        <input v-model="annotationFormCase.ip_applicant" type="text" placeholder="Optional" />
+        <input v-model="annotationFormCase.ip_applicant" type="text" placeholder="არასავალდებულო" />
+        <label>ინტელექტუალური საკუთრების ობიექტის რეგისტრაციის ნომერი</label>
+        <input v-model="annotationFormCase.ip_patent_no" type="text" placeholder="არასავალდებულო" />
         <label>ინტელექტუალური საკუთრების ობიექტის კლასები</label>
-        <input v-model="annotationFormCase.ip_classes" type="text" placeholder="Optional" />
+        <input v-model="annotationFormCase.ip_classes" type="text" placeholder="არასავალდებულო" />
         <!-- <label>Page Start</label>
         <input v-model="annotationFormCase.page_start" type="text" placeholder="*" required />
         <label>Page End</label>

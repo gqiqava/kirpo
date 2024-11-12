@@ -119,23 +119,23 @@ const submitHandler = async (event) => {
  
   <div style="display: flex; flex-wrap: wrap; gap: 24px; margin: 24px">
     <form @submit.prevent="submitHandler">
-      <label>case_no</label>
+      <label>განაცხადის ნომერი</label>
       <input v-model="searchForm.case_no" type="text" placeholder="" />
-      <label>ip_case</label>
+      <label>განცხადების ნომერი(საქმის ნომერი)</label>
       <input v-model="searchForm.ip_case" type="text" placeholder="" />
-      <label>ip_applicant</label>
+      <label>ინტელექტუალური საკუთრების ობიექტის განმცხადებელი</label>
       <input v-model="searchForm.ip_applicant" type="text" placeholder="" />
-      <label>ip_author</label>
+      <label>ინტელექტუალური საკუთრების ობიექტის ავტორი</label>
       <input v-model="searchForm.ip_author" type="text" placeholder="" />
-      <label>ip_case_name</label>
+      <label>ინტელექტუალური საკუთრების ობიექტის დასახელება</label>
       <input v-model="searchForm.ip_case_name" type="text" placeholder="" />
-      <label>ip_object_type</label>
+      <label>ინტელექტუალური საკუთრების ობიექტი</label>
       <input v-model="searchForm.ip_object_type" type="text" placeholder="" />
-      <label>ip_classes</label>
+      <label>ინტელექტუალური საკუთრების ობიექტის კლასები</label>
       <input v-model="searchForm.ip_classes" type="text" placeholder="" />
 
       <div style="display: flex; justify-content: end; align-items: end">
-        <button class="button-30" role="button" type="submit">Search</button>
+        <button class="button-30" role="button" type="submit">ძებნა</button>
       </div>
     </form>
 
@@ -145,7 +145,7 @@ const submitHandler = async (event) => {
       :key="item.path"
       class="singleFolder"
       @click="active = item.path"
-      @dblclick="changeLocation({ name: item.path, format: item.format })"
+      @dblclick="changeLocation({ name: item.name, format: item.format })"
     >
     <template v-if="item.format !== 'db'">
       <img

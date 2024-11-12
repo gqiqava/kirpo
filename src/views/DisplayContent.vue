@@ -331,7 +331,7 @@ const submitReturnFolder = async () => {
       });
       console.log('Folder returned successfully:', response.data);
       closeReturnFolderModal();
-      // Optionally refresh the folder list or emit an event
+      // არასავალდებულოly refresh the folder list or emit an event
     } catch (error) {
       console.error('Error returning folder:', error);
     }
@@ -453,17 +453,19 @@ console.log(userRole.value)
           <label>განაცხადის ნომერი</label>
           <input v-model="annotationFormCase.case_no" type="text" placeholder="*" required :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
           <label>განცხადების ნომერი(საქმის ნომერი)</label>
-          <input v-model="annotationFormCase.ip_case" type="text" placeholder="Optional" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
+          <input v-model="annotationFormCase.ip_case" type="text" placeholder="არასავალდებულო" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
           <label>ინტელექტუალური საკუთრების ობიექტი</label>
-          <input v-model="annotationFormCase.ip_object_type" type="text" placeholder="Optional" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
+          <input v-model="annotationFormCase.ip_object_type" type="text" placeholder="არასავალდებულო" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
           <label>ინტელექტუალური საკუთრების ობიექტის დასახელება</label>
-          <input v-model="annotationFormCase.ip_case_name" type="text" placeholder="Optional" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
+          <input v-model="annotationFormCase.ip_case_name" type="text" placeholder="არასავალდებულო" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
           <label>ინტელექტუალური საკუთრების ობიექტის ავტორი</label>
-          <input v-model="annotationFormCase.ip_author" type="text" placeholder="Optional" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
+          <input v-model="annotationFormCase.ip_author" type="text" placeholder="არასავალდებულო" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
           <label>ინტელექტუალური საკუთრების ობიექტის განმცხადებელი</label>
-          <input v-model="annotationFormCase.ip_applicant" type="text" placeholder="Optional" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
+          <input v-model="annotationFormCase.ip_applicant" type="text" placeholder="არასავალდებულო" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
+          <label>ინტელექტუალური საკუთრების ობიექტის რეგისტრაციის ნომერი</label>
+          <input v-model="annotationFormCase.ip_patent_no" type="text" placeholder="არასავალდებულო" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
           <label>ინტელექტუალური საკუთრების ობიექტის კლასები</label>
-          <input v-model="annotationFormCase.ip_classes" type="text" placeholder="Optional" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
+          <input v-model="annotationFormCase.ip_classes" type="text" placeholder="არასავალდებულო" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
           <!-- <label>Page Start</label>
           <input v-model="annotationFormCase.page_start" type="text" placeholder="*" required />
           <label>Page End</label>
@@ -484,7 +486,7 @@ console.log(userRole.value)
     name="view-cases-Modal"
   >
     <template #header>
-      <h3 style="width: 100%; text-align: center">Cases in {{ active }}</h3>
+      <h3 style="width: 100%; text-align: center">განაცხადები საქმე N{{ active }}-ში</h3>
     </template>
     <template #content>
       <div style="display: flex; flex-direction: column; gap: 12px">
@@ -540,24 +542,26 @@ console.log(userRole.value)
     name="edit-case-Modal"
   >
     <template #header>
-      <h3 style="width: 100%; text-align: center">შეცვალეთ განაცხადის ანოტაცია</h3>
+      <h3 style="width: 100%; text-align: center">განაცხადის ანოტაცია</h3>
     </template>
     <template #content>
       <div style="display: flex; flex-direction: column; gap: 12px">
         <label>განაცხადის ნომერი</label>
         <input v-model="annotationFormCase.case_no" type="text" placeholder="*" required :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
         <label>განცხადების ნომერი(საქმის ნომერი)</label>
-        <input v-model="annotationFormCase.ip_case" type="text" placeholder="Optional" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
+        <input v-model="annotationFormCase.ip_case" type="text" placeholder="არასავალდებულო" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
         <label>ინტელექტუალური საკუთრების ობიექტი</label>
-        <input v-model="annotationFormCase.ip_object_type" type="text" placeholder="Optional" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
+        <input v-model="annotationFormCase.ip_object_type" type="text" placeholder="არასავალდებულო" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
         <label>ინტელექტუალური საკუთრების ობიექტის დასახელება</label>
-        <input v-model="annotationFormCase.ip_case_name" type="text" placeholder="Optional" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
+        <input v-model="annotationFormCase.ip_case_name" type="text" placeholder="არასავალდებულო" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
         <label>ინტელექტუალური საკუთრების ობიექტის ავტორი</label>
-        <input v-model="annotationFormCase.ip_author" type="text" placeholder="Optional" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
+        <input v-model="annotationFormCase.ip_author" type="text" placeholder="არასავალდებულო" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
         <label>ინტელექტუალური საკუთრების ობიექტის განმცხადებელი</label>
-        <input v-model="annotationFormCase.ip_applicant" type="text" placeholder="Optional" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
+        <input v-model="annotationFormCase.ip_applicant" type="text" placeholder="არასავალდებულო" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
+        <label>ინტელექტუალური საკუთრების ობიექტის რეგისტრაციის ნომერი</label>
+        <input v-model="annotationFormCase.ip_patent_no" type="text" placeholder="არასავალდებულო" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
         <label>ინტელექტუალური საკუთრების ობიექტის კლასები</label>
-        <input v-model="annotationFormCase.ip_classes" type="text" placeholder="Optional" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
+        <input v-model="annotationFormCase.ip_classes" type="text" placeholder="არასავალდებულო" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
         <!-- <label>Page Start</label>
         <input v-model="annotationFormCase.page_start" type="text" placeholder="*" required />
         <label>Page End</label>
@@ -585,17 +589,17 @@ console.log(userRole.value)
         <label>Case No</label>
         <input v-model="annotationFormCase.case_no" type="text" placeholder="*" required :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
         <label>IP Case</label>
-        <input v-model="annotationFormCase.ip_case" type="text" placeholder="Optional" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
+        <input v-model="annotationFormCase.ip_case" type="text" placeholder="არასავალდებულო" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
         <label>IP Object Type</label>
-        <input v-model="annotationFormCase.ip_object_type" type="text" placeholder="Optional" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
+        <input v-model="annotationFormCase.ip_object_type" type="text" placeholder="არასავალდებულო" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
         <label>IP Case Name</label>
-        <input v-model="annotationFormCase.ip_case_name" type="text" placeholder="Optional" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
+        <input v-model="annotationFormCase.ip_case_name" type="text" placeholder="არასავალდებულო" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
         <label>IP Author</label>
-        <input v-model="annotationFormCase.ip_author" type="text" placeholder="Optional" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
+        <input v-model="annotationFormCase.ip_author" type="text" placeholder="არასავალდებულო" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
         <label>IP Applicant</label>
-        <input v-model="annotationFormCase.ip_applicant" type="text" placeholder="Optional" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
+        <input v-model="annotationFormCase.ip_applicant" type="text" placeholder="არასავალდებულო" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
         <label>IP Classes</label>
-        <input v-model="annotationFormCase.ip_classes" type="text" placeholder="Optional" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
+        <input v-model="annotationFormCase.ip_classes" type="text" placeholder="არასავალდებულო" :disabled="userRole !=2" :style="{borderBottom: userRole !=2 ? 'none' :  null}"/>
       </div>
     </template>
     <template #footer>
@@ -610,14 +614,14 @@ console.log(userRole.value)
       :isOpen="isPublishModalOpened"
       name="edit-case-Modal" v-if="isPublishModalOpened" @close="cancelPublish">
       <template #header>
-        <h3>Confirm Publish</h3>
+        <h3>გამოქვეყნების დადასტურება</h3>
       </template>
       <template #body>
-        <p>Are you sure you want to publish this folder?</p>
+        <p>საქმე კატალოგში გამოქყევნდება!</p>
       </template>
       <template #footer>
-        <button @click="confirmPublish">Yes</button>
-        <button @click="cancelPublish">No</button>
+        <button class="button-30" @click="confirmPublish">დიახ</button>
+        <button class="button-30" @click="cancelPublish">არა</button>
       </template>
     </Modal>
 
@@ -645,7 +649,7 @@ console.log(userRole.value)
         <p>{{ currentMessage }}</p>
       </template>
       <template #footer>
-        <button @click="closeMessageModal">Close</button>
+        <button class="button-30" role="button" @click="closeMessageModal">დახურვა</button>
       </template>
     </Modal>
 
