@@ -99,7 +99,7 @@ const closeViewCasesModal = () =>{
 const runEdit = () => {
   const id = annotationForm.value.id
   console.log(annotationForm)
-  if (userRole.value == 1) editFolderAnnotation(annotationForm.value, id)
+  if (userRole.value == 3) editFolderAnnotation(annotationForm.value, id)
     closeEditModal()
 }
 const openEditModal = async (annotationId) => {
@@ -189,7 +189,7 @@ const submitSendFolder = async () => {
 
 const runEditCase = () => {
   console.log(annotationFormCase)
-  if (userRole.value == 1) editCaseAnnotation(annotationFormCase.value, currentCaseId.value)
+  if (userRole.value == 3) editCaseAnnotation(annotationFormCase.value, currentCaseId.value)
   closeEditCaseModal()
 }
 
